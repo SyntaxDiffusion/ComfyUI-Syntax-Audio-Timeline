@@ -16,7 +16,7 @@ Draw a timing/intensity curve and make a video model's action follow it: peaks w
 
 ## How each Apply works
 
-- **Conditioning Blend** gives the base and action positives complementary per-frame cond masks (`1 - curve`, `curve`), so ComfyUI's sampler averages the two predictions frame by frame. On multi-stream latents (H3 and LTX audio+video), the audio stream is weighted along its own time axis. The action prompt inherits the base positive's guides and references, so encode it with the same I2V/reference node. Connect the latent that goes into the sampler. *hard_switch* turns the blend into prompt segments split where the curve crosses 0.5. Costs one extra positive pass per step.
+- **Conditioning Blend** gives the base and action positives complementary per-frame cond masks (`1 - curve`, `curve`), so ComfyUI's sampler averages the two predictions frame by frame. On multi-stream latents (H3 and LTX audio+video), the audio stream is weighted along its own time axis. The action prompt inherits the base positive's guides and references, so encode it with the same I2V/reference node. Connect the latent that goes into the sampler. *strength* above 1 pushes peaks past the action prompt (the base weight goes negative there, like CFG between the two prompts). *hard_switch* turns the blend into prompt segments split where the curve crosses 0.5. Costs one extra positive pass per step.
 - **Guidance** sets CFG to `1 + (cfg - 1) * curve` on each latent frame. Distilled H3/LTX workflows that run at CFG 1 get no effect from it.
 - **H3 Fun ControlNet** scales the control skip on each target video frame's tokens by the curve. Pair it with *Curve to Control Video* for a fully curve-driven control signal.
 

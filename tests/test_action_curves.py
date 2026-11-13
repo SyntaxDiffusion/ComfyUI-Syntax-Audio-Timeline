@@ -162,3 +162,28 @@ def test_overlay_and_mixer():
     assert mixed == pytest.approx([0.0, 0.0, 0.0])  # curve_0 - curve_1, clamped
     mixed = nodes.SyntaxCurveMixer.execute("average", {"curve_0": [0.0, 1.0], "curve_1": [1.0, 1.0]}).result[0]
     assert mixed == pytest.approx([0.5, 1.0])
+
+
+def test_blend_strength_above_one_still_sums_to_one():
+    pos = [[torch.zeros(1, 4, 8), {}]]
+    act = [[torch.ones(1, 4, 8), {}]]
+    plain = torch.zeros(1, 16, 5, 4, 4)
+    out = nodes.SyntaxActionCurveConditioning.execute(pos, act, {"samples": plain}, [0.0, 1.0, 0.0], 2.5, False).result[0]
+    total, conds = _run_masks(out, plain)
+    assert torch.allclose(total, torch.ones_like(total))
+    assert conds[0]["mask"].min() == pytest.approx(-1.5)
+
+
+def test_chained_blends_add_lanes():
+    pos = [[torch.zeros(1, 4, 8), {"guide": "base"}]]
+    drift = [[torch.ones(1, 4, 8), {}]]
+    boom = [[torch.full((1, 4, 8), 2.0), {}]]
+    plain = torch.zeros(1, 16, 4, 4, 4)
+    latent = {"samples": plain}
+    lane1 = nodes.SyntaxActionCurveConditioning.execute(pos, drift, latent, [1.0, 1.0, 0.0, 0.0], 1.0, False).result[0]
+    lane2 = nodes.SyntaxActionCurveConditioning.execute(lane1, boom, latent, [0.0, 0.0, 1.0, 1.0], 1.0, False).result[0]
+    assert len(lane2) == 3 and lane2[2][1]["guide"] == "base"
+    total, conds = _run_masks(lane2, plain)
+    assert torch.allclose(total, torch.ones_like(total))
+    assert torch.allclose(conds[1]["mask"][0, :, 0, 0], torch.tensor([1.0, 1.0, 0.0, 0.0]))  # drift survives where boom is 0
+    assert torch.allclose(conds[2]["mask"][0, :, 0, 0], torch.tensor([0.0, 0.0, 1.0, 1.0]))

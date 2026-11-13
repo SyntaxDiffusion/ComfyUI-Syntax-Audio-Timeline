@@ -45,7 +45,7 @@
       "action_positive": { "name": "positivo_acción", "tooltip": "Prompt de acción. Hereda las guías y referencias del positivo base." },
       "latent": { "name": "latente", "tooltip": "El latente que entra al sampler, para la disposición de fotogramas." },
       "curve": { "name": "curva" },
-      "strength": { "name": "fuerza", "tooltip": "Cuánto acercan los picos de la curva al prompt de acción." },
+      "strength": { "name": "fuerza", "tooltip": "Cuánto acercan los picos de la curva al prompt de acción. Por encima de 1 lo empuja más allá, como un CFG entre los dos prompts." },
       "hard_switch": { "name": "cambio_brusco", "tooltip": "Cambia de prompt donde la curva cruza 0.5 en vez de mezclar (segmentos de prompt)." }
     },
     "outputs": { "0": { "name": "positivo" } }

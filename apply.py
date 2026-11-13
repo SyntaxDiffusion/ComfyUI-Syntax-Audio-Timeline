@@ -6,16 +6,17 @@ from .curves import latent_time_weights, resample
 
 
 def blend_conditioning(positive, action_positive, latent_shapes, curve, strength):
-    """Two masked positives whose per-frame weights sum to 1, so the sampler averages the
+    """Masked positives whose per-frame weights sum to 1, so the sampler averages the
     base and action predictions frame by frame. Action entries inherit the base entry's
-    extra conds (guides, references) and override only what the action encode set."""
+    extra conds (guides, references) and override only what the action encode set.
+    Chaining adds lanes: existing weights are scaled by (1 - curve), later lanes win."""
     # mask layout is the latent minus its channel dim; multi-stream latents keep channels inside the packed axis
     action_mask = latent_time_weights(latent_shapes, curve, "cpu")[:, 0] * strength
     base_mask = 1.0 - action_mask
     base_extras = positive[0][1]
 
     out = []
-    for cond, extras, mask in [(c, d, base_mask) for c, d in positive] + [(c, {**base_extras, **d}, action_mask) for c, d in action_positive]:
+    for cond, extras, mask in [(c, d, d["mask"] * base_mask if "mask" in d else base_mask) for c, d in positive] + [(c, {**base_extras, **d}, action_mask) for c, d in action_positive]:
         extras = extras.copy()
         extras["mask"] = mask
         extras["mask_strength"] = 1.0
