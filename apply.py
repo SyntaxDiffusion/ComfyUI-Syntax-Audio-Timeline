@@ -2,7 +2,7 @@ import torch
 
 from comfy_extras.nodes_minimax_h3 import MiniMaxH3FunControlPatch
 
-from .curves import latent_time_weights, resample
+from .curves import latent_time_weights, to_latent_frames
 
 
 def blend_conditioning(positive, action_positive, latent_shapes, curve, strength):
@@ -60,7 +60,7 @@ class CurveFunControlPatch(MiniMaxH3FunControlPatch):
             # target video is the last packed segment, frame-major rows
             va, vb, _ = next(s for s in layout.segments if s[2] == "video")
             latent_t = layout.signature[1]
-            w = torch.tensor(resample(self.curve, latent_t), device=out["img"].device, dtype=out["img"].dtype)
+            w = torch.tensor(to_latent_frames(self.curve, latent_t), device=out["img"].device, dtype=out["img"].dtype)
             self.row_weights = (va, vb, w.repeat_interleave((vb - va) // latent_t).unsqueeze(1))
         self.control_stream, skip = self.model_patch.model.step(
             control_index, self.control_stream, args["t_emb"], args["mod_segments"], args["rope_freqs"],

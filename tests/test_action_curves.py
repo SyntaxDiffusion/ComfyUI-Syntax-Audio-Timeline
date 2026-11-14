@@ -48,8 +48,20 @@ def test_h3_av_weights_follow_pack_layout():
     w = curves.latent_time_weights(shapes, curve, "cpu")
     v, a = comfy.utils.unpack_latents(w, shapes)
     assert v.shape == (1, 24, 7, 4, 6) and a.shape == (1, 32, 2, 20)
-    assert torch.allclose(v[0, 3, :, 1, 2], torch.tensor(curves.resample(curve, 7)))
+    assert torch.allclose(v[0, 3, :, 1, 2], torch.tensor(curves.to_latent_frames(curve, 7)))
     assert torch.allclose(a[0, 5, 1, :], torch.tensor(curves.resample(curve, 20)))  # H3 audio time is the last axis
+
+
+def test_single_frame_spike_survives():
+    pts = curves.parse_points('{"points": [[0, 0], [0.368, 0], [0.37, 1], [0.372, 0], [1, 0]]}')
+    for interp in curves.INTERPOLATIONS:
+        vals = curves.evaluate(pts, interp, 124)
+        assert max(vals) == 1.0 and sum(v > 0.5 for v in vals) == 1
+    for offset in range(124):  # wherever the spike frame falls, exactly one H3 latent frame gets it at full strength
+        frame = [0.0] * 124
+        frame[offset] = 1.0
+        lat = curves.to_latent_frames(frame, 37)
+        assert sorted(lat)[-2:] == [0.0, 1.0]
 
 
 def test_ltx_audio_time_axis():

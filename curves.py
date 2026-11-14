@@ -59,6 +59,11 @@ def evaluate(points, interpolation, length):
             t2, t3 = t * t, t * t * t
             y = (2 * t3 - 3 * t2 + 1) * y0 + (t3 - 2 * t2 + t) * h * m[seg] + (-2 * t3 + 3 * t2) * y1 + (t3 - t2) * h * m[seg + 1]
         out.append(min(max(y, 0.0), 1.0))
+    # a key always lands on its nearest frame, so a spike narrower than a frame is not skipped
+    if length > 1:
+        for x, y in points:
+            f = round(x * (length - 1))
+            out[f] = max(out[f], y)
     return out
 
 
@@ -76,6 +81,16 @@ def resample(values, length):
     return out
 
 
+def to_latent_frames(values, length):
+    """Fit a per-frame curve to `length` latent frames. Downsampling keeps the peak of the frames
+    each latent frame covers, so a one-frame spike still lands at full strength."""
+    n = len(values)
+    if length >= n or length < 2:
+        return resample(values, length)
+    step = (n - 1) / (length - 1)
+    return [max(values[max(0, math.ceil((i - 0.5) * step)):min(n, math.ceil((i + 0.5) * step))]) for i in range(length)]
+
+
 def _time_dim(shape):
     # video [B, C, T, H, W]; audio is [B, C, T, F] (LTX) or [B, C, 2, T] (MiniMax H3): time is the longer axis
     if len(shape) == 4:
@@ -89,7 +104,7 @@ def latent_time_weights(latent_shapes, curve, device):
     parts = []
     for shape in latent_shapes:
         t_dim = _time_dim(shape)
-        w = torch.tensor(resample(curve, shape[t_dim]), device=device, dtype=torch.float32)
+        w = torch.tensor(to_latent_frames(curve, shape[t_dim]), device=device, dtype=torch.float32)
         view = [1] * len(shape)
         view[t_dim] = -1
         parts.append(w.view(view).expand(1, *shape[1:]))

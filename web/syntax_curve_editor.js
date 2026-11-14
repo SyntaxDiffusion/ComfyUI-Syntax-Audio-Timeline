@@ -7,6 +7,7 @@ const HIT_R = 8;
 const COLORS = { bg: "#15171c", grid: "#262a33", text: "#7d8494", curve: "#4d9eff", fill: "rgba(77,158,255,0.16)", point: "#e8ecf3", playhead: "#ffd633" };
 
 const PRESETS = {
+    "Impulses x4": [[0, 0], [0.148, 0], [0.15, 1], [0.152, 0], [0.368, 0], [0.37, 1], [0.372, 0], [0.588, 0], [0.59, 1], [0.592, 0], [0.808, 0], [0.81, 1], [0.812, 0], [1, 0]],
     "Spikes x3": [[0, 0], [0.12, 0], [0.125, 1], [0.25, 0.05], [0.37, 0], [0.375, 1], [0.5, 0.05], [0.62, 0], [0.625, 1], [0.75, 0.05], [1, 0]],
     "Hits x4": [[0, 0], [0.15, 0], [0.155, 1], [0.21, 1], [0.215, 0], [0.35, 0], [0.355, 1], [0.41, 1], [0.415, 0], [0.55, 0], [0.555, 1], [0.61, 1], [0.615, 0], [0.75, 0], [0.755, 1], [0.81, 1], [0.815, 0], [1, 0]],
     "Step on": [[0, 0], [0.55, 0], [0.56, 1], [1, 1]],
@@ -212,10 +213,12 @@ class CurveEditor {
             ctx.fillText(String(Math.round((i / 8) * (frames - 1))), x, PAD.t + h + 5);
         }
 
+        // sample every pixel plus every key, so spikes narrower than a pixel still draw
+        const xs = Array.from({ length: w + 1 }, (_, px) => px / w).concat(pts.map((p) => p[0])).sort((a, b) => a - b);
         ctx.beginPath();
-        for (let px = 0; px <= w; px++) {
-            const y = Y(evaluate(pts, interp, px / w));
-            px === 0 ? ctx.moveTo(PAD.l + px, y) : ctx.lineTo(PAD.l + px, y);
+        for (const [i, x] of xs.entries()) {
+            const y = Y(evaluate(pts, interp, x));
+            i === 0 ? ctx.moveTo(X(x), y) : ctx.lineTo(X(x), y);
         }
         ctx.strokeStyle = COLORS.curve;
         ctx.lineWidth = 2;
@@ -239,7 +242,8 @@ class CurveEditor {
         if (this.hover !== null) {
             const frame = Math.round(this.hover * (frames - 1));
             const fx = frames > 1 ? frame / (frames - 1) : 0;
-            const v = evaluate(pts, interp, fx);
+            // keys land on their nearest frame, as in curves.py
+            const v = Math.max(evaluate(pts, interp, fx), ...pts.filter((p) => Math.round(p[0] * (frames - 1)) === frame).map((p) => p[1]));
             ctx.strokeStyle = COLORS.playhead;
             ctx.lineWidth = 1.5;
             ctx.beginPath(); ctx.moveTo(X(fx), PAD.t); ctx.lineTo(X(fx), PAD.t + h); ctx.stroke();
