@@ -135,7 +135,7 @@ class SyntaxActionCurveConditioning(io.ComfyNode):
                 io.Conditioning.Input("action_positive", tooltip="Action prompt. Inherits the guides and references of the base positive."),
                 io.Latent.Input("latent", tooltip="The latent going into the sampler, used for the frame layout."),
                 Curve.Input("curve"),
-                io.Float.Input("strength", default=1.0, min=0.0, max=4.0, step=0.01, tooltip="How far the curve peaks move toward the action prompt. Above 1 pushes past it, like CFG between the two prompts."),
+                io.Float.Input("strength", default=1.0, min=0.0, max=4.0, step=0.01, tooltip="How far the curve peaks move toward the action prompt. Above 1 pushes past it, like CFG between the two prompts; keep 1 for spikes and short hits, above 1 corrupts those frames on MiniMax H3 at CFG 5."),
                 io.Boolean.Input("hard_switch", default=False,
                                  tooltip="Switch prompts where the curve crosses 0.5 instead of blending (prompt segments)."),
             ],
