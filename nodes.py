@@ -1,8 +1,10 @@
+import comfy.audio
 from comfy_api.latest import io
 
-from .apply import CurveCFG, CurveFunControlPatch, blend_conditioning
+from .apply import CurveCFG, CurveFunControlPatch, add_sound_guide, blend_conditioning
 from .curves import DEFAULT_CURVE, INTERPOLATIONS, evaluate, parse_points, resample
 from .render import STYLES, control_video, overlay
+from .sound import AUDIO_MODES, SAMPLE_RATE, SOUNDS, audio_curve, guide_audio
 
 CATEGORY = "SyntaxNodes/Action Curves"
 
@@ -211,6 +213,82 @@ class SyntaxActionCurveH3FunControl(io.ComfyNode):
         return io.NodeOutput(m)
 
 
+class SyntaxCurveToGuideAudio(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="SyntaxCurveToGuideAudio",
+            display_name="Syntax Curve to Guide Audio",
+            category=CATEGORY,
+            description="Turn the curve into a guide sound for an audio-video model: a hit on every rise past 0.5, or a wind/murmur bed as loud as the curve. Feed it to Syntax H3 Sound Guide: the video syncs its action to the sound.",
+            inputs=[
+                Curve.Input("curve"),
+                io.Combo.Input("sound", options=SOUNDS, default="thump",
+                               tooltip="thump: punches, hammer blows, beats. crash: cymbal hits. boom: thunder and explosions, rings while the curve stays up. wind: gusts as loud as the curve. murmur: speech-like sound wherever the curve is up, for dialogue timing."),
+                io.Float.Input("fps", default=24.0, min=1.0, max=240.0, step=0.01, tooltip="Frame rate of the video the curve spans (H3: 24)."),
+                io.Audio.Input("sound_clip", optional=True, tooltip="Your own one-shot, placed on every rise in place of the built-in sound."),
+            ],
+            outputs=[io.Audio.Output(display_name="guide_audio")],
+        )
+
+    @classmethod
+    def execute(cls, curve, sound, fps, sound_clip=None) -> io.NodeOutput:
+        clip = None
+        if sound_clip is not None:
+            clip = comfy.audio.resample(sound_clip["waveform"][:1], sound_clip["sample_rate"], SAMPLE_RATE)[0].mean(0)
+        x = guide_audio(curve, fps, sound, clip)
+        return io.NodeOutput({"waveform": x.expand(1, 2, -1).clone(), "sample_rate": SAMPLE_RATE})
+
+
+class SyntaxH3SoundGuide(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="SyntaxH3SoundGuide",
+            display_name="Syntax H3 Sound Guide",
+            category=CATEGORY,
+            description="Anchor a guide sound at frame 0 of a MiniMax H3 video. H3 syncs the picture to its soundtrack, so the action lands on the sound's hits. Keep the prompt plain and in line with the sound: a prompt that fights it wins.",
+            inputs=[
+                io.Conditioning.Input("positive", tooltip="Positive after MiniMax H3 Image to Video (first frame) or other guides."),
+                io.Vae.Input("audio_vae"),
+                io.Latent.Input("latent", tooltip="The MiniMax H3 AV latent going into the sampler."),
+                io.Audio.Input("guide_audio"),
+                io.Float.Input("guide_steps", default=1.0, min=0.0, max=1.0, step=0.01,
+                               tooltip="Share of sampling steps, from the start, that see the guide. 1: the guide sound becomes the soundtrack (hits, beats). About 0.3: the guide sets the timing, then the model writes its own audio (dialogue)."),
+            ],
+            outputs=[io.Conditioning.Output(display_name="positive")],
+        )
+
+    @classmethod
+    def execute(cls, positive, audio_vae, latent, guide_audio, guide_steps) -> io.NodeOutput:
+        return io.NodeOutput(add_sound_guide(positive, audio_vae, latent, guide_audio, guide_steps))
+
+
+class SyntaxAudioToCurve(io.ComfyNode):
+    @classmethod
+    def define_schema(cls):
+        return io.Schema(
+            node_id="SyntaxAudioToCurve",
+            display_name="Syntax Audio to Curve",
+            category=CATEGORY,
+            description="Make a curve from a soundtrack's loudness, one value per video frame, to time action to music or a voice track.",
+            inputs=[
+                io.Audio.Input("audio"),
+                io.Int.Input("length", default=141, min=2, max=10000, tooltip="Frames in the curve, usually the video length."),
+                io.Float.Input("fps", default=24.0, min=1.0, max=240.0, step=0.01),
+                io.Combo.Input("mode", options=AUDIO_MODES, default="loudness",
+                               tooltip="loudness: follows the volume. onsets: a spike wherever the volume jumps up (beats, hits)."),
+                io.Float.Input("range_db", default=40.0, min=1.0, max=120.0, step=0.5,
+                               tooltip="Loudness range mapped to 0..1, in dB below the loudest frame. Lower it to ignore quiet parts."),
+            ],
+            outputs=[Curve.Output(display_name="curve")],
+        )
+
+    @classmethod
+    def execute(cls, audio, length, fps, mode, range_db) -> io.NodeOutput:
+        return io.NodeOutput(audio_curve(audio["waveform"], audio["sample_rate"], length, fps, mode, range_db))
+
+
 NODES = [
     SyntaxActionCurveEditor,
     SyntaxCurveMixer,
@@ -219,4 +297,7 @@ NODES = [
     SyntaxActionCurveConditioning,
     SyntaxActionCurveGuidance,
     SyntaxActionCurveH3FunControl,
+    SyntaxCurveToGuideAudio,
+    SyntaxH3SoundGuide,
+    SyntaxAudioToCurve,
 ]

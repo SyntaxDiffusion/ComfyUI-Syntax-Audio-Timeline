@@ -1,6 +1,7 @@
 import torch
 
-from comfy_extras.nodes_minimax_h3 import MiniMaxH3FunControlPatch
+import node_helpers
+from comfy_extras.nodes_minimax_h3 import MiniMaxH3FunControlPatch, _encode_ref_audio
 
 from .curves import latent_time_weights, to_latent_frames
 
@@ -23,6 +24,22 @@ def blend_conditioning(positive, action_positive, latent_shapes, curve, strength
         extras["set_area_to_bounds"] = False
         out.append([cond, extras])
     return out
+
+
+def add_sound_guide(positive, audio_vae, latent, audio, guide_steps):
+    """Anchor `audio` at frame 0 of a MiniMax H3 AV latent, like MiniMaxH3AddGuide, and keep it
+    only for the first `guide_steps` of sampling; the plain positive takes the rest."""
+    samples = latent["samples"]
+    if not samples.is_nested or len(samples.tensors) != 2:
+        raise ValueError("H3 Sound Guide expects a MiniMax H3 AV latent")
+    audio_latent, _ = _encode_ref_audio(audio_vae, audio)
+    keyframes = list(positive[0][1].get("minimax_keyframes", []))
+    keyframes.append({"resolved_frame_index": 0, "audio_latent": audio_latent[..., :samples.tensors[1].shape[-1]]})
+    guided = node_helpers.conditioning_set_values(positive, {"minimax_keyframes": keyframes})
+    if guide_steps >= 1.0:
+        return guided
+    return (node_helpers.conditioning_set_values(guided, {"start_percent": 0.0, "end_percent": guide_steps})
+            + node_helpers.conditioning_set_values(positive, {"start_percent": guide_steps, "end_percent": 1.0}))
 
 
 class CurveCFG:

@@ -70,5 +70,40 @@
       "strength": { "name": "fuerza", "tooltip": "Fuerza con la curva en 1." }
     },
     "outputs": { "0": { "name": "modelo" } }
+  },
+  "SyntaxCurveToGuideAudio": {
+    "display_name": "Syntax Curva a Audio Guía",
+    "description": "Convierte la curva en un sonido guía para un modelo de audio y vídeo: un golpe en cada subida por encima de 0.5, o un fondo de viento/murmullo tan fuerte como la curva. Conéctalo a Syntax Guía de Sonido H3: el vídeo sincroniza la acción con el sonido.",
+    "inputs": {
+      "curve": { "name": "curva" },
+      "sound": { "name": "sonido", "tooltip": "thump: puñetazos, martillazos, beats. crash: platillos. boom: truenos y explosiones, resuena mientras la curva sigue arriba. wind: ráfagas tan fuertes como la curva. murmur: sonido parecido al habla donde la curva está arriba, para el ritmo de un diálogo." },
+      "fps": { "name": "fps", "tooltip": "Fotogramas por segundo del vídeo que cubre la curva (H3: 24)." },
+      "sound_clip": { "name": "clip_sonido", "tooltip": "Tu propio sonido, colocado en cada subida en lugar del sonido integrado." }
+    },
+    "outputs": { "0": { "name": "audio_guía" } }
+  },
+  "SyntaxH3SoundGuide": {
+    "display_name": "Syntax Guía de Sonido H3",
+    "description": "Ancla un sonido guía en el fotograma 0 de un vídeo MiniMax H3. H3 sincroniza la imagen con su banda sonora, así que la acción cae en los golpes del sonido. Usa un prompt simple que vaya con el sonido: si lo contradice, gana el prompt.",
+    "inputs": {
+      "positive": { "name": "positivo", "tooltip": "Positivo después de MiniMax H3 Image to Video (primer fotograma) u otras guías." },
+      "audio_vae": { "name": "vae_audio" },
+      "latent": { "name": "latente", "tooltip": "El latente AV de MiniMax H3 que entra al sampler." },
+      "guide_audio": { "name": "audio_guía" },
+      "guide_steps": { "name": "pasos_guía", "tooltip": "Parte de los pasos de muestreo, desde el inicio, que ven la guía. 1: el sonido guía queda como banda sonora (golpes, beats). Cerca de 0.3: la guía marca el ritmo y luego el modelo escribe su propio audio (diálogo)." }
+    },
+    "outputs": { "0": { "name": "positivo" } }
+  },
+  "SyntaxAudioToCurve": {
+    "display_name": "Syntax Audio a Curva",
+    "description": "Crea una curva a partir del volumen de una banda sonora, un valor por fotograma, para sincronizar la acción con música o una pista de voz.",
+    "inputs": {
+      "audio": { "name": "audio" },
+      "length": { "name": "duración", "tooltip": "Fotogramas de la curva, normalmente la duración del vídeo." },
+      "fps": { "name": "fps" },
+      "mode": { "name": "modo", "tooltip": "loudness: sigue el volumen. onsets: un pico donde el volumen sube de golpe (beats, golpes)." },
+      "range_db": { "name": "rango_db", "tooltip": "Rango de volumen que va a 0..1, en dB por debajo del fotograma más fuerte. Bájalo para ignorar las partes suaves." }
+    },
+    "outputs": { "0": { "name": "curva" } }
   }
 }

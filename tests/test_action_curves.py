@@ -20,6 +20,7 @@ from importlib import import_module  # noqa: E402
 curves = import_module(pack.__name__ + ".curves")
 apply = import_module(pack.__name__ + ".apply")
 render = import_module(pack.__name__ + ".render")
+sound = import_module(pack.__name__ + ".sound")
 nodes = import_module(pack.__name__ + ".nodes")
 
 
@@ -199,3 +200,73 @@ def test_chained_blends_add_lanes():
     assert torch.allclose(total, torch.ones_like(total))
     assert torch.allclose(conds[1]["mask"][0, :, 0, 0], torch.tensor([1.0, 1.0, 0.0, 0.0]))  # drift survives where boom is 0
     assert torch.allclose(conds[2]["mask"][0, :, 0, 0], torch.tensor([0.0, 0.0, 1.0, 1.0]))
+
+
+def test_rises():
+    assert sound.rises([0.0, 0.2, 0.9, 1.0, 0.1, 0.6]) == [(2, 4), (5, 6)]
+    assert sound.rises([1.0, 1.0]) == [(0, 2)]
+    assert sound.rises([0.0, 0.4]) == []
+
+
+def _rms(x, start, end, fps=24):
+    sr = sound.SAMPLE_RATE
+    return x[round(start / fps * sr):round(end / fps * sr)].square().mean().sqrt().item()
+
+
+@pytest.mark.parametrize("name", sound.SOUNDS)
+def test_guide_audio_follows_curve(name):
+    curve = [0.0] * 24 + [1.0] * 12 + [0.0] * 12
+    x = sound.guide_audio(curve, 24, name)
+    assert x.numel() == 2 * sound.SAMPLE_RATE
+    assert x.abs().max().item() == pytest.approx(0.95, abs=1e-4)
+    assert _rms(x, 0, 23) < 1e-6  # silent before the rise
+    assert _rms(x, 24, 36) > 0.05
+
+
+def test_guide_audio_places_clip_on_every_rise():
+    clip = torch.ones(100)
+    x = sound.guide_audio([0.0, 1.0, 0.0, 1.0, 1.0, 0.0], 4, "thump", clip)
+    starts = (x[1:] > 0) & (x[:-1] == 0)
+    assert starts.nonzero().flatten().tolist() == [round(sound.SAMPLE_RATE / 4) - 1, round(3 * sound.SAMPLE_RATE / 4) - 1]
+
+
+def test_curve_to_guide_audio_node_is_stereo():
+    clip = {"waveform": torch.ones(1, 1, 4410), "sample_rate": 44100}
+    out = nodes.SyntaxCurveToGuideAudio.execute([0.0, 1.0, 0.0], "thump", 24.0, clip).result[0]
+    assert out["sample_rate"] == sound.SAMPLE_RATE
+    assert out["waveform"].shape == (1, 2, round(3 / 24 * sound.SAMPLE_RATE))
+
+
+def test_audio_to_curve():
+    sr, fps = 8000, 10
+    wave = torch.zeros(1, 2, sr * 2)
+    wave[..., sr // 2:sr] = 0.5  # loud from frame 5 to 9
+    wave[..., sr:] = 0.005  # 40 dB quieter after
+    level = nodes.SyntaxAudioToCurve.execute({"waveform": wave, "sample_rate": sr}, 20, fps, "loudness", 40.0).result[0]
+    assert level[:5] == pytest.approx([0.0] * 5)
+    assert level[5:10] == pytest.approx([1.0] * 5)
+    assert level[10:] == pytest.approx([0.0] * 10, abs=1e-6)
+    onsets = sound.audio_curve(wave, sr, 20, fps, "onsets", 80.0)
+    assert onsets.index(1.0) == 5 and onsets[6] == 0.0
+    assert sound.audio_curve(wave, sr, 25, fps, "loudness", 40.0)[20:] == [0.0] * 5  # past the end of the audio
+
+
+class _AudioVAE:
+    audio_sample_rate = 32000
+
+    def encode(self, waveform):
+        return torch.ones(1, 32, 2, waveform.shape[1] // 1280)
+
+
+def test_h3_sound_guide_anchors_audio_and_releases_it():
+    latent = {"samples": comfy.nested_tensor.NestedTensor((torch.zeros(1, 24, 9, 4, 4), torch.zeros(1, 32, 2, 50)))}
+    pos = [[torch.zeros(1, 4, 8), {"minimax_keyframes": [{"resolved_frame_index": 0, "latent": "first"}]}]]
+    audio = {"waveform": torch.zeros(1, 2, 32000 * 3), "sample_rate": 32000}
+    held = nodes.SyntaxH3SoundGuide.execute(pos, _AudioVAE(), latent, audio, 1.0).result[0]
+    assert len(held) == 1
+    keys = held[0][1]["minimax_keyframes"]
+    assert keys[0]["latent"] == "first" and keys[1]["audio_latent"].shape[-1] == 50  # cropped to the video's audio
+    assert len(pos[0][1]["minimax_keyframes"]) == 1
+    released = nodes.SyntaxH3SoundGuide.execute(pos, _AudioVAE(), latent, audio, 0.3).result[0]
+    assert [(c[1]["start_percent"], c[1]["end_percent"]) for c in released] == [(0.0, 0.3), (0.3, 1.0)]
+    assert len(released[0][1]["minimax_keyframes"]) == 2 and len(released[1][1]["minimax_keyframes"]) == 1
