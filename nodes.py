@@ -74,8 +74,6 @@ class SyntaxCurveMixer(io.ComfyNode):
                 out = [a - b for a, b in zip(out, c)]
             else:
                 out = [a * b for a, b in zip(out, c)]
-        if operation == "average":
-            out = [sum(v) / len(curves) for v in zip(*curves)]
         return io.NodeOutput([min(max(v, 0.0), 1.0) for v in out])
 
 
