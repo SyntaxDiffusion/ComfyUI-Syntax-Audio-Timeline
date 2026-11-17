@@ -257,6 +257,40 @@ def test_music_finds_the_kicks_in_the_drums_input_when_given():
     assert ui["kicks"] == pytest.approx(kick_times(120, 8, 0.5), abs=0.01)
 
 
+def test_music_is_guided_by_the_drums_stem_by_default():
+    drums = {"waveform": drum_loop(120, bars=8, offset=0.5, sixteenths=True).view(1, 1, -1), "sample_rate": SR}
+    images = {"image0": torch.zeros(1, 8, 8, 3)}
+    out = nodes.SyntaxTimeline.execute(track=drums, drums=drums, images=images, start_at=0.0, duration=4.0, bpm=120.0, mode="music")
+    start = out.ui["timeline"][0]["cuts"][0]
+    guide = out.result[1][0]["waveform"][0, 0]
+    stem = timeline.slice_audio(drums["waveform"], SR, start, guide.numel() / SR)[0, 0]
+    assert torch.allclose(guide, stem) and "guided by the drums" in out.result[5]   # every hit of the kit, hats and snare too
+    kicks = nodes.SyntaxTimeline.execute(track=drums, drums=drums, images=images, start_at=0.0, duration=4.0, bpm=120.0, mode="music",
+                                         music_guide="kicks")
+    assert "guided by the kicks" in kicks.result[5] and not torch.allclose(kicks.result[1][0]["waveform"][0, 0], guide)
+
+
+def test_a_shot_with_no_kick_is_guided_by_the_low_hits_of_the_track():
+    loop = drum_loop(120, bars=4, offset=0.5, four_on_floor=True)
+    n = int(0.5 * SR) + 8 * 2 * SR                                    # 8 bars at 120 BPM after 0.5 s
+    drums = torch.zeros(n)
+    drums[: loop.numel()] = loop[:n]                                  # kicks for 4 bars, then a breakdown
+    track = drums.clone()
+    t = torch.arange(int(0.6 * SR)) / SR
+    boom = torch.sin(2 * math.pi * 45 * t) * torch.exp(-t / 0.25)    # 808s in the breakdown, only in the track
+    for at in (9.0, 10.5, 12.0, 13.5, 15.0):
+        i = int(at * SR)
+        track[i:i + boom.numel()] += boom
+    images = {f"image{i}": torch.zeros(1, 8, 8, 3) for i in range(2)}
+    for guide in ("drums", "kicks"):
+        out = nodes.SyntaxTimeline.execute(track={"waveform": track.view(1, 1, -1), "sample_rate": SR},
+                                           drums={"waveform": drums.view(1, 1, -1), "sample_rate": SR}, images=images,
+                                           start_at=0.0, duration=16.0, bpm=120.0, mode="music", music_guide=guide)
+        assert "low hits in shot 2" in out.result[5]
+        second = out.result[1][1]["waveform"][0, 0]
+        assert second.abs().max() > 0.1                                # not silent: H3 gets the 808s
+
+
 def test_edited_cuts_override_the_automatic_ones():
     x = speech([(0.5, 4.0), (4.8, 9.1), (9.9, 14.0)], 15.0)
     track = {"waveform": x.view(1, 1, -1), "sample_rate": SR}

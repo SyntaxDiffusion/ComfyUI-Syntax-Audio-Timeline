@@ -29,7 +29,7 @@ The strip along the bottom is *Syntax Preview Strip*: the guide's loudness in bl
 
 **Syntax Timeline** takes your track and any number of images and cuts the track into shots. Pick a **mode**:
 
-- **music**: shots of whole bars from the downbeat after *start_at*, each guided by just the **kick drum hits** of its part of the song: the node finds the kicks and puts a clean thump on each, nothing else of the song. Connect the drums stem to **drums** (Audio Separation -> Drums) for clean kicks; from a full mix alone, hard bass notes can count as kicks too. The beat grid is set on the kicks, so cuts land on the beat. *bpm* 0 finds the tempo.
+- **music**: shots of whole bars from the downbeat after *start_at*, each guided by its part of the **drums**. *music_guide* picks what H3 hears: *drums*, the drums stem with every hit of the kit (the default, for busy and fast songs), or *kicks*, a clean thump on each kick drum hit and nothing else (for four-on-the-floor). A shot with no kick, like a breakdown or 808s, gets the track's low hits instead of silence. Connect the drums stem to **drums** (Audio Separation -> Drums); without it the guide is the kicks found in the full mix, where hard bass notes can count as kicks too. The beat grid is set on the kicks, so cuts land on the beat. *bpm* 0 finds the tempo.
 - **dialogue**: cuts moved into the pauses, so no line is cut in half, each shot guided by its part of the **voice** (Audio Separation -> Vocals, or the track if it is only voice).
 - **action**: cuts moved between hits, each shot guided by its part of the track plus the hits and sounds you draw on the timeline. With no track, the timeline is blank and what you draw is the sound.
 

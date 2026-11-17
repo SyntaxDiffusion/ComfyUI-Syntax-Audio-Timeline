@@ -901,6 +901,9 @@ app.registerExtension({
         const onConfigure = nodeType.prototype.onConfigure;
         nodeType.prototype.onConfigure = function () {
             const r = onConfigure?.apply(this, arguments);
+            // workflows saved before music_guide existed load a stray value into it
+            const guide = this.widgets.find((w) => w.name === "music_guide");
+            if (!guide.options.values.includes(guide.value)) guide.value = "drums";
             requestAnimationFrame(() => { this.syntaxTimeline?.checkSource(); this.syntaxTimeline?.resize(); this.syntaxTimeline?.draw(); });
             return r;
         };
