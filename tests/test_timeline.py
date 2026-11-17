@@ -59,13 +59,27 @@ def test_auto_bars_aims_for_about_five_and_a_half_seconds():
 
 
 def test_shots_start_on_bar_lines_without_drift():
-    shots = timeline.shots_from_cuts(timeline.beat_cuts(4, 85.0, 1.785, 2))
+    shots = timeline.shots_from_cuts(timeline.bar_cuts(1.785, 85.0, 8, 4))
     bar = 4 * 60 / 85
     for i, s in enumerate(shots):
         assert s["start"] == pytest.approx(1.785 + i * 2 * bar)
         assert s["length"] == timeline.h3_frames(s["frames"])
     # frame counts follow the rounded cut points, so the joined video stays on the track
     assert sum(s["frames"] for s in shots) == round((1.785 + 8 * bar) * 24) - round(1.785 * 24)
+
+
+def test_bars_are_shared_out_longest_shots_first():
+    bar = 2.0   # 120 BPM
+    cuts = timeline.bar_cuts(1.0, 120.0, 10, 4)
+    assert [round((b - a) / bar) for a, b in zip(cuts, cuts[1:])] == [3, 3, 2, 2]
+    assert cuts[-1] == pytest.approx(21.0)
+
+
+def test_kick_only_keeps_the_low_thump_and_drops_the_hats():
+    t = torch.arange(SR) / SR
+    low, high = torch.sin(2 * math.pi * 60 * t), torch.sin(2 * math.pi * 8000 * t)
+    out = timeline.kick_only((low + high).view(1, 1, -1), SR)[0, 0]
+    assert torch.allclose(out[SR // 4:-SR // 4], low[SR // 4:-SR // 4], atol=0.05)
 
 
 def test_guide_slices_cover_the_generated_length_and_pad_past_the_end():
@@ -121,7 +135,7 @@ def test_timeline_node_cuts_one_shot_per_image_on_downbeats():
     x = drum_loop(120, bars=16, offset=0.5)
     track = {"waveform": x.view(1, 1, -1).repeat(1, 2, 1), "sample_rate": SR}
     images = {f"image{i}": torch.full((1, 8, 8, 3), i / 10) for i in range(3)}
-    out = nodes.SyntaxTimeline.execute(track=track, images=images, start_at=4.0, bpm=0.0, bars_per_shot=0).result
+    out = nodes.SyntaxTimeline.execute(track=track, images=images, start_at=4.0, duration=0.0, bpm=0.0).result
     image, guide_audio, length, frames, soundtrack, info, strip = out
     assert [float(i[0, 0, 0, 0]) for i in image] == pytest.approx([0.0, 0.1, 0.2])
     assert frames == [144, 144, 144]                      # 3 bars of 2 s at 24 fps
@@ -169,7 +183,7 @@ def test_timeline_node_cuts_dialogue_in_the_pauses():
     track = {"waveform": x.view(1, 1, -1), "sample_rate": SR}
     images = {f"image{i}": torch.zeros(1, 8, 8, 3) for i in range(3)}
     image, guide_audio, length, frames, soundtrack, info, strip = nodes.SyntaxTimeline.execute(
-        track=track, images=images, start_at=0.5, bpm=0.0, bars_per_shot=0, cut_on="pauses").result
+        track=track, images=images, start_at=0.5, duration=0.0, bpm=0.0, mode="dialogue").result
     cuts = [0.5]
     for f in frames:
         cuts.append(cuts[-1] + f / 24)
@@ -177,35 +191,77 @@ def test_timeline_node_cuts_dialogue_in_the_pauses():
     assert "pauses" in info
 
 
+def one_shot(mode, track, duration, start_at=0.5):
+    out = nodes.SyntaxTimeline.execute(track=track, images={"image0": torch.zeros(1, 8, 8, 3)}, start_at=start_at, duration=duration,
+                                       bpm=0.0, mode=mode).result
+    return out[3], out[5]
+
+
+def test_duration_sets_the_length_of_one_shot_in_each_mode():
+    voice = {"waveform": speech([(0.5, 4.0), (4.8, 9.1), (9.9, 14.0)], 15.0).view(1, 1, -1), "sample_rate": SR}
+    frames, _ = one_shot("dialogue", voice, 4.0)
+    assert 4.0 < 0.5 + frames[0] / 24 < 4.8                 # the end moves into the pause after the first line
+    drums = {"waveform": drum_loop(120, bars=8, offset=0.5).view(1, 1, -1), "sample_rate": SR}
+    frames, info = one_shot("music", drums, 6.2, start_at=0.0)
+    assert frames == [144] and "3 bars" in info             # whole 2 s bars closest to 6.2 s
+
+
+def test_one_image_can_run_thirty_seconds():
+    drums = {"waveform": drum_loop(120, bars=20, offset=0.5).view(1, 1, -1), "sample_rate": SR}
+    frames, info = one_shot("music", drums, 30.0, start_at=0.0)
+    assert frames == [720] and "Context Windows" in info     # 15 bars, past H3's 15 s
+
+
+def test_duration_zero_runs_to_the_end_of_the_sound():
+    voice = {"waveform": speech([(0.5, 4.0), (4.8, 9.1), (9.9, 14.0)], 15.0).view(1, 1, -1), "sample_rate": SR}
+    frames, _ = one_shot("dialogue", voice, 0.0)
+    assert 0.5 + frames[0] / 24 == pytest.approx(14.0, abs=0.05)
+
+
+def test_music_is_guided_by_the_kick_of_the_drums_input():
+    drums = {"waveform": drum_loop(120, bars=8, offset=0.5).view(1, 1, -1), "sample_rate": SR}
+    hats = torch.sin(2 * math.pi * 9000 * torch.arange(drums["waveform"].shape[-1]) / SR).view(1, 1, -1)
+    track = {"waveform": hats, "sample_rate": SR}
+    out = nodes.SyntaxTimeline.execute(track=track, drums=drums, images={"image0": torch.zeros(1, 8, 8, 3)}, start_at=0.0,
+                                       duration=4.0, bpm=0.0, mode="music")
+    assert out.ui["timeline"][0]["bpm"] == pytest.approx(120, rel=0.01)   # the grid comes from the drums, not the track
+    guide = out.result[1][0]["waveform"]
+    spec = torch.fft.rfft(guide[0, 0]).abs()
+    f = torch.fft.rfftfreq(guide.shape[-1], 1 / SR)
+    assert spec[f > 2000].max() < spec[f < 150].max() * 0.01
+
+
 def test_edited_cuts_override_the_automatic_ones():
     x = speech([(0.5, 4.0), (4.8, 9.1), (9.9, 14.0)], 15.0)
     track = {"waveform": x.view(1, 1, -1), "sample_rate": SR}
     images = {f"image{i}": torch.zeros(1, 8, 8, 3) for i in range(3)}
-    out = nodes.SyntaxTimeline.execute(track=track, images=images, start_at=0.0, bpm=0.0, bars_per_shot=0, cut_on="pauses",
+    out = nodes.SyntaxTimeline.execute(track=track, images=images, start_at=0.0, duration=0.0, bpm=0.0, mode="dialogue",
                                        edits='{"cuts": [1.0, 3.0, 6.0, 12.0]}')
     frames = out.result[3]
     assert frames == [48, 72, 144]
     assert out.ui["timeline"][0]["cuts"] == pytest.approx([1.0, 3.0, 6.0, 12.0])
 
 
-def test_edits_for_a_different_number_of_images_are_ignored():
+def test_edited_shots_need_not_match_the_images_and_reuse_them_in_order():
     x = speech([(0.5, 4.0), (4.8, 9.1), (9.9, 14.0)], 15.0)
     track = {"waveform": x.view(1, 1, -1), "sample_rate": SR}
-    images = {f"image{i}": torch.zeros(1, 8, 8, 3) for i in range(3)}
-    out = nodes.SyntaxTimeline.execute(track=track, images=images, start_at=0.5, bpm=0.0, bars_per_shot=0, cut_on="pauses",
-                                       edits='{"cuts": [1.0, 3.0, 12.0]}')
-    assert len(out.result[3]) == 3
-    assert "ignored" in out.result[5]
+    images = {f"image{i}": torch.full((1, 8, 8, 3), i / 10) for i in range(2)}
+    one = nodes.SyntaxTimeline.execute(track=track, images=images, start_at=0.0, duration=0.0, bpm=0.0, mode="action",
+                                       edits='{"cuts": [0.5, 14.0]}').result
+    assert one[3] == [324] and len(one[0]) == 1
+    five = nodes.SyntaxTimeline.execute(track=track, images=images, start_at=0.0, duration=0.0, bpm=0.0, mode="action",
+                                        edits='{"cuts": [0, 2, 4, 6, 8, 10]}').result
+    assert [float(i[0, 0, 0, 0]) for i in five[0]] == pytest.approx([0.0, 0.1, 0.0, 0.1, 0.0])
 
 
 def test_timeline_sends_the_beat_grid_to_the_editor():
     x = drum_loop(120, bars=16, offset=0.5)
     track = {"waveform": x.view(1, 1, -1), "sample_rate": SR}
     images = {f"image{i}": torch.zeros(1, 8, 8, 3) for i in range(2)}
-    ui = nodes.SyntaxTimeline.execute(track=track, images=images, start_at=0.0, bpm=0.0, bars_per_shot=0).ui["timeline"][0]
+    ui = nodes.SyntaxTimeline.execute(track=track, images=images, start_at=0.0, duration=0.0, bpm=0.0).ui["timeline"][0]
     assert ui["bpm"] == pytest.approx(120, rel=0.01)
     assert ui["duration"] == pytest.approx(x.numel() / SR)
-    assert len(ui["cuts"]) == 3 and ui["mode"] == "beats"
+    assert len(ui["cuts"]) == 3 and ui["mode"] == "music" and ui["images"] == 2
 
 
 def test_hit_sounds_land_only_at_the_marked_times():
@@ -219,8 +275,8 @@ def test_hit_sounds_land_only_at_the_marked_times():
 
 def test_drawn_hits_without_a_track_drive_the_shots():
     images = {f"image{i}": torch.zeros(1, 8, 8, 3) for i in range(3)}
-    out = nodes.SyntaxTimeline.execute(track=None, images=images, start_at=0.0, bpm=0.0, bars_per_shot=0, cut_on="pauses",
-                                       duration=12.0, hit_sound="thump", edits='{"hits": [1.5, 5.0, 9.0]}')
+    out = nodes.SyntaxTimeline.execute(track=None, images=images, start_at=0.0, duration=12.0, bpm=0.0, mode="action",
+                                       hit_sound="thump", edits='{"hits": [1.5, 5.0, 9.0]}')
     image, guide_audio, length, frames, soundtrack, info, strip = out.result
     cuts = [0.0]
     for f in frames:
@@ -235,9 +291,9 @@ def test_drawn_hits_are_mixed_into_a_track_guide():
     x = speech([(0.5, 3.0)], 6.0)
     track = {"waveform": x.view(1, 1, -1), "sample_rate": SR}
     images = {"image0": torch.zeros(1, 8, 8, 3)}
-    plain = nodes.SyntaxTimeline.execute(track=track, images=images, start_at=0.0, bpm=0.0, bars_per_shot=0, cut_on="even",
+    plain = nodes.SyntaxTimeline.execute(track=track, images=images, start_at=0.0, duration=0.0, bpm=0.0, mode="action",
                                          edits='{"cuts": [0.0, 6.0]}').result[1][0]
-    mixed = nodes.SyntaxTimeline.execute(track=track, images=images, start_at=0.0, bpm=0.0, bars_per_shot=0, cut_on="even",
+    mixed = nodes.SyntaxTimeline.execute(track=track, images=images, start_at=0.0, duration=0.0, bpm=0.0, mode="action",
                                          edits='{"cuts": [0.0, 6.0], "hits": [4.0]}').result[1][0]
     i = int(4.0 * SR)
     assert plain["waveform"][..., i:i + 2000].abs().max() == 0
@@ -247,13 +303,13 @@ def test_drawn_hits_are_mixed_into_a_track_guide():
 def test_no_track_and_no_hits_says_what_to_do():
     images = {"image0": torch.zeros(1, 8, 8, 3)}
     with pytest.raises(ValueError, match="track"):
-        nodes.SyntaxTimeline.execute(track=None, images=images, start_at=0.0, bpm=0.0, bars_per_shot=0, cut_on="even", duration=8.0)
+        nodes.SyntaxTimeline.execute(track=None, images=images, start_at=0.0, duration=8.0, bpm=0.0, mode="action")
 
 
 def test_timeline_gives_each_shot_its_slice_of_the_strip():
     images = {f"image{i}": torch.zeros(1, 8, 8, 3) for i in range(2)}
-    out = nodes.SyntaxTimeline.execute(track=None, images=images, start_at=0.0, bpm=0.0, bars_per_shot=0, cut_on="even",
-                                       duration=8.0, edits='{"hits": [2.0, 6.0]}').result
+    out = nodes.SyntaxTimeline.execute(track=None, images=images, start_at=0.0, duration=8.0, bpm=0.0, mode="action",
+                                       edits='{"hits": [2.0, 6.0], "cuts": [0.0, 4.0, 8.0]}').result
     frames, strips = out[3], out[6]
     assert len(strips) == 2
     assert [s["offset"] for s in strips] == [0, frames[0]]

@@ -1,13 +1,11 @@
 import json
 
-import torch
-
 from comfy_api.latest import io
 
-from .timeline import (H3_FPS, HIT_SOUNDS, analyse, auto_bars, beat_cuts, downbeat_at, even_cuts, frame_levels, hits_audio, pause_cuts,
+from .timeline import (H3_FPS, HIT_SOUNDS, analyse, auto_bars, bar_cuts, downbeat_at, frame_levels, hits_audio, kick_only, pause_cuts,
                        shots_from_cuts, slice_audio, strip_overlay)
 
-CUT_MODES = ["beats", "pauses", "even"]
+MODES = ["music", "dialogue", "action"]
 
 CATEGORY = "SyntaxNodes/Timeline"
 
@@ -25,25 +23,29 @@ class SyntaxTimeline(io.ComfyNode):
             node_id="SyntaxTimeline",
             display_name="Syntax Timeline",
             category=CATEGORY,
-            description="Cut your track into one shot per image: on the beat, in the pauses, or around hits you mark. Most outputs are lists, so the nodes after it run once per shot; join the shot videos with Concatenate Video.",
+            description="Cut your track into shots, each guided by its part of the sound: the kick for music, the voice for dialogue, the track for action. Most outputs are lists, so the nodes after it run once per shot; join the shot videos with Concatenate Video.",
             inputs=[
                 io.Audio.Input("track", optional=True,
                                tooltip="Your song, dialogue or sound effects. It sets the timeline and is the soundtrack of the finished video. Leave it empty to mark hits on a blank timeline."),
                 io.Autogrow.Input("images", template=io.Autogrow.TemplatePrefix(
-                    io.Image.Input("image", tooltip="One reference image per shot, in order."), prefix="image", min=1, max=50)),
-                io.Audio.Input("guide", optional=True,
-                               tooltip="What each shot moves to: the drums stem for music (Audio Separation -> Drums), the voice for dialogue. Also used to find the beat. Default: the track."),
-                io.Combo.Input("cut_on", options=CUT_MODES, default="beats",
-                               tooltip="beats: music, shots of whole bars from a downbeat. pauses: dialogue and action, the rest of the track split across the images with each cut moved into a pause. even: the rest of the track split equally."),
+                    io.Image.Input("image", tooltip="Reference images, used by the shots in order and repeated when there are more shots than images."),
+                    prefix="image", min=1, max=50)),
+                io.Audio.Input("drums", optional=True,
+                               tooltip="music: the drums stem (Audio Separation -> Drums). Its kick guides the shots and its beat sets the grid. Default: the track."),
+                io.Audio.Input("voice", optional=True,
+                               tooltip="dialogue: the voice (Audio Separation -> Vocals). It guides the lips and places the cuts. Default: the track."),
+                io.Combo.Input("mode", options=MODES, default="music",
+                               tooltip="music: shots of whole bars, guided by the kick. dialogue: cuts in the pauses, guided by the voice. action: cuts between hits, guided by the track."),
                 io.Float.Input("start_at", default=0.0, min=0.0, max=36000.0, step=0.01,
-                               tooltip="Where the first shot starts, in seconds. With beats it snaps to the next downbeat."),
-                io.Float.Input("bpm", default=0.0, min=0.0, max=300.0, step=0.01, tooltip="beats only. 0 finds the tempo; type it in if you know it."),
-                io.Int.Input("bars_per_shot", default=0, min=0, max=64, tooltip="beats only. 0 picks the whole bars closest to 5.5 seconds."),
-                io.Float.Input("duration", default=10.0, min=1.0, max=600.0, step=0.1, tooltip="Length of the timeline in seconds when there is no track."),
+                               tooltip="Where the first shot starts, in seconds. music snaps it to the next downbeat."),
+                io.Float.Input("duration", default=0.0, min=0.0, max=36000.0, step=0.1,
+                               tooltip="How long the video runs from start_at, in seconds, split across the images. 0: about 5.5 s per image for music, the rest of the sound otherwise. Without a track, the length of the blank timeline (0: 10 s)."),
+                io.Float.Input("bpm", default=0.0, min=0.0, max=300.0, step=0.01, tooltip="music only. 0 finds the tempo; type it in if you know it."),
                 io.Combo.Input("hit_sound", options=HIT_SOUNDS, default="thump",
                                tooltip="The sound each marked hit makes in the guide: thump (punches, blows), crash (cymbals), boom (thunder, explosions)."),
-                io.String.Input("edits", default="", tooltip="Cuts and hits from the timeline editor, in seconds. Written by the editor; clear it to go back to automatic cuts."),
+                io.String.Input("edits", default="", tooltip="Shots and hits from the timeline editor, in seconds. Written by the editor."),
             ],
+            is_output_node=True,
             has_intermediate_output=True,
             outputs=[
                 io.Image.Output(display_name="image", is_output_list=True),
@@ -57,46 +59,52 @@ class SyntaxTimeline(io.ComfyNode):
         )
 
     @classmethod
-    def execute(cls, images, start_at, bpm, bars_per_shot, cut_on="beats", duration=10.0, hit_sound="thump",
-                edits="", track=None, guide=None) -> io.NodeOutput:
+    def execute(cls, images, start_at, duration, bpm, mode="music", hit_sound="thump", edits="",
+                track=None, drums=None, voice=None) -> io.NodeOutput:
         images = [images[k] for k in sorted(images, key=lambda k: int(k[len("image"):])) if images[k] is not None]
         edits = json.loads(edits) if edits.strip() else {}
         hits = sorted(float(h) for h in edits.get("hits", []))
         end = None
-        if track is None:
+        blank = track is None
+        if blank:
             if not hits:
                 raise ValueError("Syntax Timeline: connect a track, or double-click the timeline to mark hits")
             sr = 44100
-            track = {"waveform": hits_audio(hits, duration, sr, hit_sound).view(1, 1, -1), "sample_rate": sr}
-            guide, end = track, duration
-            if cut_on == "beats":
-                cut_on = "pauses"
+            end = duration or 10.0
+            track = {"waveform": hits_audio(hits, end, sr, hit_sound).view(1, 1, -1), "sample_rate": sr}
+            guide = track
+            if mode == "music":
+                mode = "action"
         else:
-            guide = guide or track
+            if duration:
+                end = start_at + duration
+            if mode == "music":
+                drums = drums or track
+                guide = {"waveform": kick_only(drums["waveform"], drums["sample_rate"]), "sample_rate": drums["sample_rate"]}
+            else:
+                guide = (voice if mode == "dialogue" else None) or track
             if hits:
                 sr = guide["sample_rate"]
                 drawn = hits_audio(hits, guide["waveform"].shape[-1] / sr, sr, hit_sound)
                 peak = float(guide["waveform"].abs().max()) or 1.0
                 guide = {"waveform": guide["waveform"] + drawn.to(guide["waveform"]) * peak, "sample_rate": sr}
+
         grid = None
-        if cut_on == "beats":
-            grid = analyse(_mono(guide), guide["sample_rate"])
+        if mode == "music":
+            grid = analyse(_mono(drums), drums["sample_rate"])
             if bpm > 0:
                 grid["bpm"] = bpm
-            bars = bars_per_shot or auto_bars(grid["bpm"])
-            first = downbeat_at(grid, start_at)
-            cuts = beat_cuts(len(images), grid["bpm"], first, bars)
-            how = "{:.2f} BPM, {} bars per shot".format(grid["bpm"], bars)
+            bar = 240.0 / grid["bpm"]
+            bars = max(len(images), round(duration / bar)) if duration else len(images) * auto_bars(grid["bpm"])
+            cuts = bar_cuts(downbeat_at(grid, start_at), grid["bpm"], bars, len(images))
+            how = "{:.2f} BPM, {} bars".format(grid["bpm"], bars)
         else:
-            cuts = (pause_cuts if cut_on == "pauses" else even_cuts)(_mono(guide), guide["sample_rate"], start_at, len(images), end)
-            how = "cut on {}".format(cut_on)
-
+            cuts = pause_cuts(_mono(guide), guide["sample_rate"], start_at, len(images), end, move_end=end is not None and not blank)
+            how = "cut in the pauses"
         edited = edits.get("cuts")
-        if edited and len(edited) == len(images) + 1:
+        if edited and len(edited) > 1:
             cuts = sorted(float(c) for c in edited)
             how = "cuts from the editor"
-        elif edited:
-            how += " (editor cuts ignored: they are for {} images)".format(len(edited) - 1)
 
         shots = shots_from_cuts(cuts)
         guides = [{"waveform": slice_audio(guide["waveform"], guide["sample_rate"], s["start"], s["length"] / H3_FPS),
@@ -105,9 +113,9 @@ class SyntaxTimeline(io.ComfyNode):
         soundtrack = {"waveform": slice_audio(track["waveform"], track["sample_rate"], cuts[0], total), "sample_rate": track["sample_rate"]}
         info = "{}, {} shots from {:.2f} s ({:.2f} s): {}".format(how, len(shots), cuts[0], total, ", ".join("{:.1f} s".format(s["frames"] / H3_FPS) for s in shots))
         if any(s["length"] > 362 for s in shots):
-            info += ". Shots over 15 s are outside H3's trained range: add images or move start_at."
-        ui = {"timeline": [{"duration": track["waveform"].shape[-1] / track["sample_rate"], "mode": cut_on, "cuts": cuts, "hits": hits,
-                            "bpm": grid["bpm"] if grid else None, "downbeat": grid["downbeat"] if grid else None}]}
+            info += ". Shots over 15 s go past H3's trained range: keep MiniMax H3 Context Windows on the model."
+        ui = {"timeline": [{"duration": track["waveform"].shape[-1] / track["sample_rate"], "mode": mode, "cuts": cuts, "hits": hits,
+                            "images": len(images), "bpm": grid["bpm"] if grid else None, "downbeat": grid["downbeat"] if grid else None}]}
         n = sum(s["frames"] for s in shots)
         start = round(cuts[0] * H3_FPS)
         covered = slice_audio(guide["waveform"], guide["sample_rate"], cuts[0], total)[0].float().mean(0)
@@ -118,7 +126,8 @@ class SyntaxTimeline(io.ComfyNode):
         for s in shots[:-1]:
             offsets.append(offsets[-1] + s["frames"])
         strips = [{**whole, "offset": o} for o in offsets]
-        return io.NodeOutput(images, guides, [s["length"] for s in shots], [s["frames"] for s in shots], soundtrack, info, strips, ui=ui)
+        shot_images = [images[i % len(images)] for i in range(len(shots))]
+        return io.NodeOutput(shot_images, guides, [s["length"] for s in shots], [s["frames"] for s in shots], soundtrack, info, strips, ui=ui)
 
 
 class SyntaxPreviewStrip(io.ComfyNode):

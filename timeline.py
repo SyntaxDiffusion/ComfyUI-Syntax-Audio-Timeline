@@ -29,9 +29,21 @@ def shots_from_cuts(cuts, fps=H3_FPS):
     return shots
 
 
-def beat_cuts(n_shots, bpm, downbeat, bars):
-    """Cut points (seconds) for back-to-back shots of `bars` bars from `downbeat`."""
-    return [downbeat + i * bars * 240.0 / bpm for i in range(n_shots + 1)]
+def bar_cuts(downbeat, bpm, bars, n_shots):
+    """Cut points (seconds) for `n_shots` back-to-back shots sharing `bars` whole bars from `downbeat`,
+    the longer shots first."""
+    cuts, at = [downbeat], 0
+    for i in range(n_shots):
+        at += bars // n_shots + (i < bars % n_shots)
+        cuts.append(downbeat + at * 240.0 / bpm)
+    return cuts
+
+
+def kick_only(waveform, sample_rate, cutoff=100.0):
+    """The kick drum out of a drums stem: a 4th-order low-pass, so the hats and most of the snare drop away."""
+    spec = torch.fft.rfft(waveform.float(), dim=-1)
+    f = torch.fft.rfftfreq(waveform.shape[-1], 1.0 / sample_rate, device=waveform.device)
+    return torch.fft.irfft(spec / torch.sqrt(1 + (f / cutoff) ** 8), n=waveform.shape[-1], dim=-1).to(waveform.dtype)
 
 
 def _loudness(mono, sample_rate, rate=ENV_RATE):
@@ -56,14 +68,14 @@ def even_cuts(mono, sample_rate, start, n_shots, end=None):
     return [start + i * (end - start) / n_shots for i in range(n_shots + 1)]
 
 
-def pause_cuts(mono, sample_rate, start, n_shots, end=None):
+def pause_cuts(mono, sample_rate, start, n_shots, end=None, move_end=False):
     """Like even_cuts, but each cut moves into the quietest moment near it, so no shot cuts a line
-    or a hit in half."""
+    or a hit in half. With `move_end` the end moves into a pause too."""
     db = _loudness(mono, sample_rate)
     smooth = torch.nn.functional.avg_pool1d(db.view(1, 1, -1), 15, 1, 7, count_include_pad=False).flatten()
     cuts = even_cuts(mono, sample_rate, start, n_shots, end)
     reach = min(1.5, (cuts[-1] - start) / n_shots / 3)
-    for i in range(1, n_shots):
+    for i in range(1, n_shots + 1 if move_end else n_shots):
         lo, hi = int((cuts[i] - reach) * ENV_RATE), int((cuts[i] + reach) * ENV_RATE) + 1
         window = smooth[lo:hi]
         # the middle of the quiet stretch around the quietest moment, so the cut sits inside the pause
