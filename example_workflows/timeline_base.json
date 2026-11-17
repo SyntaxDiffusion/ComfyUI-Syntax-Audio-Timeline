@@ -2,7 +2,7 @@
  "id": "7e1a0c00-0000-4000-8000-845695452411",
  "revision": 0,
  "last_node_id": 30,
- "last_link_id": 40,
+ "last_link_id": 39,
  "nodes": [
   {
    "id": 1,
@@ -24,7 +24,7 @@
     "Node name for S&R": "MarkdownNote"
    },
    "widgets_values": [
-    "## Base: music, dialogue or action\n\nOne shot per image over your track, in order. Load a track and your images, pick **mode** and press Run.\n\n- **mode**: *music* cuts whole bars from the downbeat after *start_at*, guided by the kick of **drums**; *dialogue* cuts in the pauses, guided by **voice**; *action* cuts between hits, guided by the track.\n- **Audio Separation** feeds **drums** and **voice** from your track, so switching mode is one click.\n- **duration**: how long the video runs from *start_at*. One image and 30 s gives one 30 s shot.\n- **Context windows**: each shot is sampled in overlapping ~5 s windows, so shots can run 30 s and more and keep their look. Bypass the node for the tightest sync on short shots.\n- **Anchor**: every shot also sees this image as <Picture 2>, which holds the people and style across the cuts. Default: the first image; a character or style sheet works well.\n- **Timeline**: drag the yellow handles to set the range, double-click a shot to split it, right-click a cut to merge, *One shot* for a single long shot. Hover it for hints, **?** lists every control, **Analyse** shows the exact cuts without rendering.\n\n**This version: hits that land.** Full model, 30 steps, CFG 5 with the negative zeroed before the guide, so the picture is pushed onto the audio.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
+    "## Base: music, dialogue or action\n\nOne shot per image over your track, in order. Load a track and your images, pick **mode** and press Run.\n\n- **mode**: *music* cuts whole bars from the downbeat after *start_at*, guided by the kick of **drums**; *dialogue* cuts in the pauses, guided by **voice**; *action* cuts between hits, guided by the track.\n- **Audio Separation** feeds **drums** and **voice** from your track, so switching mode is one click.\n- **duration**: how long the video runs from *start_at*. One image and 30 s gives one 30 s shot.\n- **Context windows**: each shot is sampled in overlapping ~5 s windows, so shots can run 30 s and more and keep their look. Bypass the node for the tightest sync on short shots.\n- **Anchor** (optional): to hold a hard style or a character across the cuts, connect a character or style sheet to *Reference to Video*'s second image slot and add *drawn in the art style of <Picture 2>* to the prompt. Not a full scene: H3 may animate the anchor instead of the shot's image.\n- **Timeline**: drag the yellow handles to set the range, double-click a shot to split it, right-click a cut to merge, *One shot* for a single long shot. Hover it for hints, **?** lists every control, **Analyse** shows the exact cuts without rendering.\n\n**This version: hits that land.** Full model, 30 steps, CFG 5 with the negative zeroed before the guide, so the picture is pushed onto the audio.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
    ]
   },
   {
@@ -80,7 +80,7 @@
      "name": "STRING",
      "type": "STRING",
      "links": [
-      15
+      14
      ]
     }
    ],
@@ -88,7 +88,7 @@
     "Node name for S&R": "PrimitiveStringMultiline"
    },
    "widgets_values": [
-    "A scene set in <Picture 1>, with the exact people and style of <Picture 2>; everyone keeps their own face, hair and clothes. On every beat or hit the people move sharply and strongly, speaking along with any voice, then hold still until the next one. Static camera, no text."
+    "A scene in the exact style, people and setting of <Picture 1>; everyone keeps their own face, hair and clothes. On every beat or hit the people move sharply and strongly, speaking along with any voice, then hold still until the next one. Static camera, no text."
    ],
    "title": "Prompt"
   },
@@ -263,9 +263,7 @@
     {
      "name": "IMAGE",
      "type": "IMAGE",
-     "links": [
-      14
-     ]
+     "links": []
     },
     {
      "name": "MASK",
@@ -280,7 +278,7 @@
     "shot_1.png",
     "image"
    ],
-   "title": "Anchor (<Picture 2> in every shot)"
+   "title": "Anchor (optional, see the note)"
   },
   {
    "id": 9,
@@ -346,7 +344,7 @@
      "name": "guide_audio",
      "type": "AUDIO",
      "links": [
-      20
+      19
      ],
      "shape": 6
     },
@@ -354,7 +352,7 @@
      "name": "length",
      "type": "INT",
      "links": [
-      16
+      15
      ],
      "shape": 6
     },
@@ -362,7 +360,7 @@
      "name": "frames",
      "type": "INT",
      "links": [
-      34
+      33
      ],
      "shape": 6
     },
@@ -370,7 +368,7 @@
      "name": "soundtrack",
      "type": "AUDIO",
      "links": [
-      39
+      38
      ]
     },
     {
@@ -384,7 +382,7 @@
      "name": "strip",
      "type": "SYNTAX_STRIP",
      "links": [
-      36
+      35
      ],
      "shape": 6
     }
@@ -544,8 +542,8 @@
      "name": "MODEL",
      "type": "MODEL",
      "links": [
-      22,
-      25
+      21,
+      24
      ]
     }
    ],
@@ -614,7 +612,7 @@
      "type": "VAE",
      "links": [
       12,
-      32
+      31
      ]
     }
    ],
@@ -645,7 +643,7 @@
      "name": "VAE",
      "type": "VAE",
      "links": [
-      18
+      17
      ]
     }
    ],
@@ -689,12 +687,12 @@
     {
      "name": "ref_images.ref_image_1",
      "type": "IMAGE",
-     "link": 14
+     "link": null
     },
     {
      "name": "prompt",
      "type": "STRING",
-     "link": 15,
+     "link": 14,
      "widget": {
       "name": "prompt"
      }
@@ -702,7 +700,7 @@
     {
      "name": "length",
      "type": "INT",
-     "link": 16,
+     "link": 15,
      "widget": {
       "name": "length"
      }
@@ -713,16 +711,16 @@
      "name": "positive",
      "type": "CONDITIONING",
      "links": [
-      17,
-      21
+      16,
+      20
      ]
     },
     {
      "name": "LATENT",
      "type": "LATENT",
      "links": [
-      19,
-      30
+      18,
+      29
      ]
     }
    ],
@@ -730,7 +728,7 @@
     "Node name for S&R": "MiniMaxH3ReferenceToVideo"
    },
    "widgets_values": [
-    "A scene set in <Picture 1>, with the exact people and style of <Picture 2>; everyone keeps their own face, hair and clothes. On every beat or hit the people move sharply and strongly, speaking along with any voice, then hold still until the next one. Static camera, no text.",
+    "A scene in the exact style, people and setting of <Picture 1>; everyone keeps their own face, hair and clothes. On every beat or hit the people move sharply and strongly, speaking along with any voice, then hold still until the next one. Static camera, no text.",
     864,
     480,
     141,
@@ -755,22 +753,22 @@
     {
      "name": "positive",
      "type": "CONDITIONING",
-     "link": 17
+     "link": 16
     },
     {
      "name": "audio_vae",
      "type": "VAE",
-     "link": 18
+     "link": 17
     },
     {
      "name": "latent",
      "type": "LATENT",
-     "link": 19
+     "link": 18
     },
     {
      "name": "audio",
      "type": "AUDIO",
-     "link": 20
+     "link": 19
     }
    ],
    "outputs": [
@@ -778,7 +776,7 @@
      "name": "positive",
      "type": "CONDITIONING",
      "links": [
-      23
+      22
      ]
     }
    ],
@@ -808,7 +806,7 @@
     {
      "name": "conditioning",
      "type": "CONDITIONING",
-     "link": 21
+     "link": 20
     }
    ],
    "outputs": [
@@ -816,7 +814,7 @@
      "name": "CONDITIONING",
      "type": "CONDITIONING",
      "links": [
-      24
+      23
      ]
     }
    ],
@@ -844,17 +842,17 @@
     {
      "name": "model",
      "type": "MODEL",
-     "link": 22
+     "link": 21
     },
     {
      "name": "positive",
      "type": "CONDITIONING",
-     "link": 23
+     "link": 22
     },
     {
      "name": "negative",
      "type": "CONDITIONING",
-     "link": 24
+     "link": 23
     }
    ],
    "outputs": [
@@ -862,7 +860,7 @@
      "name": "GUIDER",
      "type": "GUIDER",
      "links": [
-      27
+      26
      ]
     }
    ],
@@ -893,7 +891,7 @@
      "name": "NOISE",
      "type": "NOISE",
      "links": [
-      26
+      25
      ]
     }
    ],
@@ -925,7 +923,7 @@
      "name": "SAMPLER",
      "type": "SAMPLER",
      "links": [
-      28
+      27
      ]
     }
    ],
@@ -954,7 +952,7 @@
     {
      "name": "model",
      "type": "MODEL",
-     "link": 25
+     "link": 24
     }
    ],
    "outputs": [
@@ -962,7 +960,7 @@
      "name": "SIGMAS",
      "type": "SIGMAS",
      "links": [
-      29
+      28
      ]
     }
    ],
@@ -993,27 +991,27 @@
     {
      "name": "noise",
      "type": "NOISE",
-     "link": 26
+     "link": 25
     },
     {
      "name": "guider",
      "type": "GUIDER",
-     "link": 27
+     "link": 26
     },
     {
      "name": "sampler",
      "type": "SAMPLER",
-     "link": 28
+     "link": 27
     },
     {
      "name": "sigmas",
      "type": "SIGMAS",
-     "link": 29
+     "link": 28
     },
     {
      "name": "latent_image",
      "type": "LATENT",
-     "link": 30
+     "link": 29
     }
    ],
    "outputs": [
@@ -1021,7 +1019,7 @@
      "name": "output",
      "type": "LATENT",
      "links": [
-      31
+      30
      ]
     },
     {
@@ -1053,12 +1051,12 @@
     {
      "name": "samples",
      "type": "LATENT",
-     "link": 31
+     "link": 30
     },
     {
      "name": "vae",
      "type": "VAE",
-     "link": 32
+     "link": 31
     }
    ],
    "outputs": [
@@ -1066,7 +1064,7 @@
      "name": "IMAGE",
      "type": "IMAGE",
      "links": [
-      33
+      32
      ]
     }
    ],
@@ -1093,12 +1091,12 @@
     {
      "name": "image",
      "type": "IMAGE",
-     "link": 33
+     "link": 32
     },
     {
      "name": "length",
      "type": "INT",
-     "link": 34,
+     "link": 33,
      "widget": {
       "name": "length"
      }
@@ -1109,7 +1107,7 @@
      "name": "IMAGE",
      "type": "IMAGE",
      "links": [
-      35
+      34
      ]
     }
    ],
@@ -1140,12 +1138,12 @@
     {
      "name": "images",
      "type": "IMAGE",
-     "link": 35
+     "link": 34
     },
     {
      "name": "strip",
      "type": "SYNTAX_STRIP",
-     "link": 36
+     "link": 35
     }
    ],
    "outputs": [
@@ -1153,7 +1151,7 @@
      "name": "IMAGE",
      "type": "IMAGE",
      "links": [
-      37
+      36
      ]
     }
    ],
@@ -1181,7 +1179,7 @@
     {
      "name": "images",
      "type": "IMAGE",
-     "link": 37
+     "link": 36
     },
     {
      "name": "audio",
@@ -1194,7 +1192,7 @@
      "name": "VIDEO",
      "type": "VIDEO",
      "links": [
-      38
+      37
      ]
     }
    ],
@@ -1228,12 +1226,12 @@
     {
      "name": "videos.video0",
      "type": "VIDEO",
-     "link": 38
+     "link": 37
     },
     {
      "name": "complete_audio",
      "type": "AUDIO",
-     "link": 39
+     "link": 38
     }
    ],
    "outputs": [
@@ -1241,7 +1239,7 @@
      "name": "VIDEO",
      "type": "VIDEO",
      "links": [
-      40
+      39
      ]
     }
    ],
@@ -1271,7 +1269,7 @@
     {
      "name": "video",
      "type": "VIDEO",
-     "link": 40
+     "link": 39
     }
    ],
    "outputs": [],
@@ -1393,14 +1391,6 @@
   ],
   [
    14,
-   8,
-   0,
-   17,
-   3,
-   "IMAGE"
-  ],
-  [
-   15,
    3,
    0,
    17,
@@ -1408,7 +1398,7 @@
    "STRING"
   ],
   [
-   16,
+   15,
    9,
    2,
    17,
@@ -1416,7 +1406,7 @@
    "INT"
   ],
   [
-   17,
+   16,
    17,
    0,
    18,
@@ -1424,7 +1414,7 @@
    "CONDITIONING"
   ],
   [
-   18,
+   17,
    16,
    0,
    18,
@@ -1432,7 +1422,7 @@
    "VAE"
   ],
   [
-   19,
+   18,
    17,
    1,
    18,
@@ -1440,7 +1430,7 @@
    "LATENT"
   ],
   [
-   20,
+   19,
    9,
    1,
    18,
@@ -1448,7 +1438,7 @@
    "AUDIO"
   ],
   [
-   21,
+   20,
    17,
    0,
    19,
@@ -1456,7 +1446,7 @@
    "CONDITIONING"
   ],
   [
-   22,
+   21,
    13,
    0,
    20,
@@ -1464,7 +1454,7 @@
    "MODEL"
   ],
   [
-   23,
+   22,
    18,
    0,
    20,
@@ -1472,7 +1462,7 @@
    "CONDITIONING"
   ],
   [
-   24,
+   23,
    19,
    0,
    20,
@@ -1480,7 +1470,7 @@
    "CONDITIONING"
   ],
   [
-   25,
+   24,
    13,
    0,
    23,
@@ -1488,7 +1478,7 @@
    "MODEL"
   ],
   [
-   26,
+   25,
    21,
    0,
    24,
@@ -1496,7 +1486,7 @@
    "NOISE"
   ],
   [
-   27,
+   26,
    20,
    0,
    24,
@@ -1504,7 +1494,7 @@
    "GUIDER"
   ],
   [
-   28,
+   27,
    22,
    0,
    24,
@@ -1512,7 +1502,7 @@
    "SAMPLER"
   ],
   [
-   29,
+   28,
    23,
    0,
    24,
@@ -1520,7 +1510,7 @@
    "SIGMAS"
   ],
   [
-   30,
+   29,
    17,
    1,
    24,
@@ -1528,7 +1518,7 @@
    "LATENT"
   ],
   [
-   31,
+   30,
    24,
    0,
    25,
@@ -1536,7 +1526,7 @@
    "LATENT"
   ],
   [
-   32,
+   31,
    15,
    0,
    25,
@@ -1544,7 +1534,7 @@
    "VAE"
   ],
   [
-   33,
+   32,
    25,
    0,
    26,
@@ -1552,7 +1542,7 @@
    "IMAGE"
   ],
   [
-   34,
+   33,
    9,
    3,
    26,
@@ -1560,7 +1550,7 @@
    "INT"
   ],
   [
-   35,
+   34,
    26,
    0,
    27,
@@ -1568,7 +1558,7 @@
    "IMAGE"
   ],
   [
-   36,
+   35,
    9,
    6,
    27,
@@ -1576,7 +1566,7 @@
    "SYNTAX_STRIP"
   ],
   [
-   37,
+   36,
    27,
    0,
    28,
@@ -1584,7 +1574,7 @@
    "IMAGE"
   ],
   [
-   38,
+   37,
    28,
    0,
    29,
@@ -1592,7 +1582,7 @@
    "VIDEO"
   ],
   [
-   39,
+   38,
    9,
    4,
    29,
@@ -1600,7 +1590,7 @@
    "AUDIO"
   ],
   [
-   40,
+   39,
    29,
    0,
    30,

@@ -2,7 +2,17 @@
 
 Settings behind the clips in the README. All use MiniMax H3 ref2va at 864x480 and 24 fps, four images, seed 1, timed on a DGX Spark (GB10). The audio is from Epidemic Sound and is not included; use your own.
 
-These clips predate two changes: the music guide now keeps only the kick of the drums stem, and every shot also sees a shared *Anchor* image as \<Picture 2\>. The prompts below are as they were run; the workflows now start with *set in \<Picture 1\>, with the exact characters and style of \<Picture 2\>*.
+These clips predate the kick-only music guide (the drums stem was the guide). The release check below uses the current version.
+
+## Release check
+
+Fast drafts (turbo LoRA, 8 steps, CFG 1) of the current version with the same media, on a DGX Spark; `timeline_base` on an RTX 4090.
+
+- **music**: 85.00 BPM, four 2-bar shots, kick-only guide from the drums stem: 12 min. Motion right after a drum hit is 5.5x its local median.
+- **dialogue**: cuts in the pauses (4.0, 3.6, 3.2, 2.5 s): 7 min.
+- **action**: cuts between hits (3.3, 3.4, 3.9, 4.9 s): 8 min.
+- **base**: Audio Separation for drums and voice, Context Windows, 75.00 BPM, four 6.4 s shots: 19 min.
+- **anchor**: with the first image (a full scene) as a shared `<Picture 2>`, H3 animated the anchor instead of the shot's own image in 2 of 4 dialogue shots; asking only for its art style fixed one of them. Without an anchor every shot kept its own image, so the anchor is optional and meant for a character or style sheet.
 
 ## Reference images
 

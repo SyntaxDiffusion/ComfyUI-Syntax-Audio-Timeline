@@ -2,7 +2,7 @@
  "id": "7e1a0c00-0000-4000-8000-837025501945",
  "revision": 0,
  "last_node_id": 28,
- "last_link_id": 35,
+ "last_link_id": 34,
  "nodes": [
   {
    "id": 1,
@@ -24,7 +24,7 @@
     "Node name for S&R": "MarkdownNote"
    },
    "widgets_values": [
-    "## Music video\n\nOne shot per image, cut on the downbeats of your track. Each shot is guided by the **kick** of its part of the song, so the action lands on the hits.\n\n- **Track**: your song. **Drums**: its drums stem (Audio Separation -> Drums, or a stem file); without it the track is used, which follows the music more loosely.\n- **start_at**: roughly where the first shot starts; it snaps to the next downbeat. **duration** 0 gives ~5.5 s per image; **bpm** 0 finds the tempo.\n- **Anchor**: every shot also sees this image as <Picture 2>, which holds the people and style across the cuts. Default: the first image; a character or style sheet works well.\n- **Timeline**: drag the yellow handles to set the range, double-click a shot to split it, right-click a cut to merge, *One shot* for a single long shot. Hover it for hints, **?** lists every control, **Analyse** shows the exact cuts without rendering.\n\n**This version: fast draft.** The ref2v 4-step turbo LoRA, 8 steps, CFG 1: quick, but follows the audio loosely.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
+    "## Music video\n\nOne shot per image, cut on the downbeats of your track. Each shot is guided by the **kick** of its part of the song, so the action lands on the hits.\n\n- **Track**: your song. **Drums**: its drums stem (Audio Separation -> Drums, or a stem file); without it the track is used, which follows the music more loosely.\n- **start_at**: roughly where the first shot starts; it snaps to the next downbeat. **duration** 0 gives ~5.5 s per image; **bpm** 0 finds the tempo.\n- **Anchor** (optional): to hold a hard style or a character across the cuts, connect a character or style sheet to *Reference to Video*'s second image slot and add *drawn in the art style of <Picture 2>* to the prompt. Not a full scene: H3 may animate the anchor instead of the shot's image.\n- **Timeline**: drag the yellow handles to set the range, double-click a shot to split it, right-click a cut to merge, *One shot* for a single long shot. Hover it for hints, **?** lists every control, **Analyse** shows the exact cuts without rendering.\n\n**This version: fast draft.** The ref2v 4-step turbo LoRA, 8 steps, CFG 1: quick, but follows the audio loosely.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
    ]
   },
   {
@@ -79,7 +79,7 @@
      "name": "STRING",
      "type": "STRING",
      "links": [
-      12
+      11
      ]
     }
    ],
@@ -87,7 +87,7 @@
     "Node name for S&R": "PrimitiveStringMultiline"
    },
    "widgets_values": [
-    "A music video set in the scene of <Picture 1>, with the exact characters and style of <Picture 2>. Between drum hits everything holds still. On every drum hit the lights and screens flash, graphic elements pulse outward in one hard burst and the characters move sharply to the beat, then instantly settle back. Static camera, no text."
+    "A music video in the exact style, characters and setting of <Picture 1>. Between drum hits everything holds still. On every drum hit the lights and screens flash, graphic elements pulse outward in one hard burst and the characters move sharply to the beat, then instantly settle back. Static camera, no text."
    ],
    "title": "Prompt"
   },
@@ -262,9 +262,7 @@
     {
      "name": "IMAGE",
      "type": "IMAGE",
-     "links": [
-      11
-     ]
+     "links": []
     },
     {
      "name": "MASK",
@@ -279,7 +277,7 @@
     "shot_1.png",
     "image"
    ],
-   "title": "Anchor (<Picture 2> in every shot)"
+   "title": "Anchor (optional, see the note)"
   },
   {
    "id": 9,
@@ -345,7 +343,7 @@
      "name": "guide_audio",
      "type": "AUDIO",
      "links": [
-      17
+      16
      ],
      "shape": 6
     },
@@ -353,7 +351,7 @@
      "name": "length",
      "type": "INT",
      "links": [
-      13
+      12
      ],
      "shape": 6
     },
@@ -361,7 +359,7 @@
      "name": "frames",
      "type": "INT",
      "links": [
-      29
+      28
      ],
      "shape": 6
     },
@@ -369,7 +367,7 @@
      "name": "soundtrack",
      "type": "AUDIO",
      "links": [
-      34
+      33
      ]
     },
     {
@@ -383,7 +381,7 @@
      "name": "strip",
      "type": "SYNTAX_STRIP",
      "links": [
-      31
+      30
      ],
      "shape": 6
     }
@@ -486,8 +484,8 @@
      "name": "MODEL",
      "type": "MODEL",
      "links": [
-      18,
-      20
+      17,
+      19
      ]
     }
    ],
@@ -553,7 +551,7 @@
      "type": "VAE",
      "links": [
       9,
-      27
+      26
      ]
     }
    ],
@@ -584,7 +582,7 @@
      "name": "VAE",
      "type": "VAE",
      "links": [
-      15
+      14
      ]
     }
    ],
@@ -628,12 +626,12 @@
     {
      "name": "ref_images.ref_image_1",
      "type": "IMAGE",
-     "link": 11
+     "link": null
     },
     {
      "name": "prompt",
      "type": "STRING",
-     "link": 12,
+     "link": 11,
      "widget": {
       "name": "prompt"
      }
@@ -641,7 +639,7 @@
     {
      "name": "length",
      "type": "INT",
-     "link": 13,
+     "link": 12,
      "widget": {
       "name": "length"
      }
@@ -652,15 +650,15 @@
      "name": "positive",
      "type": "CONDITIONING",
      "links": [
-      14
+      13
      ]
     },
     {
      "name": "LATENT",
      "type": "LATENT",
      "links": [
-      16,
-      25
+      15,
+      24
      ]
     }
    ],
@@ -668,7 +666,7 @@
     "Node name for S&R": "MiniMaxH3ReferenceToVideo"
    },
    "widgets_values": [
-    "A music video set in the scene of <Picture 1>, with the exact characters and style of <Picture 2>. Between drum hits everything holds still. On every drum hit the lights and screens flash, graphic elements pulse outward in one hard burst and the characters move sharply to the beat, then instantly settle back. Static camera, no text.",
+    "A music video in the exact style, characters and setting of <Picture 1>. Between drum hits everything holds still. On every drum hit the lights and screens flash, graphic elements pulse outward in one hard burst and the characters move sharply to the beat, then instantly settle back. Static camera, no text.",
     864,
     480,
     141,
@@ -693,22 +691,22 @@
     {
      "name": "positive",
      "type": "CONDITIONING",
-     "link": 14
+     "link": 13
     },
     {
      "name": "audio_vae",
      "type": "VAE",
-     "link": 15
+     "link": 14
     },
     {
      "name": "latent",
      "type": "LATENT",
-     "link": 16
+     "link": 15
     },
     {
      "name": "audio",
      "type": "AUDIO",
-     "link": 17
+     "link": 16
     }
    ],
    "outputs": [
@@ -716,7 +714,7 @@
      "name": "positive",
      "type": "CONDITIONING",
      "links": [
-      19
+      18
      ]
     }
    ],
@@ -746,12 +744,12 @@
     {
      "name": "model",
      "type": "MODEL",
-     "link": 18
+     "link": 17
     },
     {
      "name": "conditioning",
      "type": "CONDITIONING",
-     "link": 19
+     "link": 18
     }
    ],
    "outputs": [
@@ -759,7 +757,7 @@
      "name": "GUIDER",
      "type": "GUIDER",
      "links": [
-      22
+      21
      ]
     }
    ],
@@ -788,7 +786,7 @@
      "name": "NOISE",
      "type": "NOISE",
      "links": [
-      21
+      20
      ]
     }
    ],
@@ -820,7 +818,7 @@
      "name": "SAMPLER",
      "type": "SAMPLER",
      "links": [
-      23
+      22
      ]
     }
    ],
@@ -849,7 +847,7 @@
     {
      "name": "model",
      "type": "MODEL",
-     "link": 20
+     "link": 19
     }
    ],
    "outputs": [
@@ -857,7 +855,7 @@
      "name": "SIGMAS",
      "type": "SIGMAS",
      "links": [
-      24
+      23
      ]
     }
    ],
@@ -888,27 +886,27 @@
     {
      "name": "noise",
      "type": "NOISE",
-     "link": 21
+     "link": 20
     },
     {
      "name": "guider",
      "type": "GUIDER",
-     "link": 22
+     "link": 21
     },
     {
      "name": "sampler",
      "type": "SAMPLER",
-     "link": 23
+     "link": 22
     },
     {
      "name": "sigmas",
      "type": "SIGMAS",
-     "link": 24
+     "link": 23
     },
     {
      "name": "latent_image",
      "type": "LATENT",
-     "link": 25
+     "link": 24
     }
    ],
    "outputs": [
@@ -916,7 +914,7 @@
      "name": "output",
      "type": "LATENT",
      "links": [
-      26
+      25
      ]
     },
     {
@@ -948,12 +946,12 @@
     {
      "name": "samples",
      "type": "LATENT",
-     "link": 26
+     "link": 25
     },
     {
      "name": "vae",
      "type": "VAE",
-     "link": 27
+     "link": 26
     }
    ],
    "outputs": [
@@ -961,7 +959,7 @@
      "name": "IMAGE",
      "type": "IMAGE",
      "links": [
-      28
+      27
      ]
     }
    ],
@@ -988,12 +986,12 @@
     {
      "name": "image",
      "type": "IMAGE",
-     "link": 28
+     "link": 27
     },
     {
      "name": "length",
      "type": "INT",
-     "link": 29,
+     "link": 28,
      "widget": {
       "name": "length"
      }
@@ -1004,7 +1002,7 @@
      "name": "IMAGE",
      "type": "IMAGE",
      "links": [
-      30
+      29
      ]
     }
    ],
@@ -1035,12 +1033,12 @@
     {
      "name": "images",
      "type": "IMAGE",
-     "link": 30
+     "link": 29
     },
     {
      "name": "strip",
      "type": "SYNTAX_STRIP",
-     "link": 31
+     "link": 30
     }
    ],
    "outputs": [
@@ -1048,7 +1046,7 @@
      "name": "IMAGE",
      "type": "IMAGE",
      "links": [
-      32
+      31
      ]
     }
    ],
@@ -1076,7 +1074,7 @@
     {
      "name": "images",
      "type": "IMAGE",
-     "link": 32
+     "link": 31
     },
     {
      "name": "audio",
@@ -1089,7 +1087,7 @@
      "name": "VIDEO",
      "type": "VIDEO",
      "links": [
-      33
+      32
      ]
     }
    ],
@@ -1123,12 +1121,12 @@
     {
      "name": "videos.video0",
      "type": "VIDEO",
-     "link": 33
+     "link": 32
     },
     {
      "name": "complete_audio",
      "type": "AUDIO",
-     "link": 34
+     "link": 33
     }
    ],
    "outputs": [
@@ -1136,7 +1134,7 @@
      "name": "VIDEO",
      "type": "VIDEO",
      "links": [
-      35
+      34
      ]
     }
    ],
@@ -1166,7 +1164,7 @@
     {
      "name": "video",
      "type": "VIDEO",
-     "link": 35
+     "link": 34
     }
    ],
    "outputs": [],
@@ -1264,14 +1262,6 @@
   ],
   [
    11,
-   8,
-   0,
-   16,
-   3,
-   "IMAGE"
-  ],
-  [
-   12,
    3,
    0,
    16,
@@ -1279,7 +1269,7 @@
    "STRING"
   ],
   [
-   13,
+   12,
    9,
    2,
    16,
@@ -1287,7 +1277,7 @@
    "INT"
   ],
   [
-   14,
+   13,
    16,
    0,
    17,
@@ -1295,7 +1285,7 @@
    "CONDITIONING"
   ],
   [
-   15,
+   14,
    15,
    0,
    17,
@@ -1303,7 +1293,7 @@
    "VAE"
   ],
   [
-   16,
+   15,
    16,
    1,
    17,
@@ -1311,7 +1301,7 @@
    "LATENT"
   ],
   [
-   17,
+   16,
    9,
    1,
    17,
@@ -1319,7 +1309,7 @@
    "AUDIO"
   ],
   [
-   18,
+   17,
    12,
    0,
    18,
@@ -1327,7 +1317,7 @@
    "MODEL"
   ],
   [
-   19,
+   18,
    17,
    0,
    18,
@@ -1335,7 +1325,7 @@
    "CONDITIONING"
   ],
   [
-   20,
+   19,
    12,
    0,
    21,
@@ -1343,7 +1333,7 @@
    "MODEL"
   ],
   [
-   21,
+   20,
    19,
    0,
    22,
@@ -1351,7 +1341,7 @@
    "NOISE"
   ],
   [
-   22,
+   21,
    18,
    0,
    22,
@@ -1359,7 +1349,7 @@
    "GUIDER"
   ],
   [
-   23,
+   22,
    20,
    0,
    22,
@@ -1367,7 +1357,7 @@
    "SAMPLER"
   ],
   [
-   24,
+   23,
    21,
    0,
    22,
@@ -1375,7 +1365,7 @@
    "SIGMAS"
   ],
   [
-   25,
+   24,
    16,
    1,
    22,
@@ -1383,7 +1373,7 @@
    "LATENT"
   ],
   [
-   26,
+   25,
    22,
    0,
    23,
@@ -1391,7 +1381,7 @@
    "LATENT"
   ],
   [
-   27,
+   26,
    14,
    0,
    23,
@@ -1399,7 +1389,7 @@
    "VAE"
   ],
   [
-   28,
+   27,
    23,
    0,
    24,
@@ -1407,7 +1397,7 @@
    "IMAGE"
   ],
   [
-   29,
+   28,
    9,
    3,
    24,
@@ -1415,7 +1405,7 @@
    "INT"
   ],
   [
-   30,
+   29,
    24,
    0,
    25,
@@ -1423,7 +1413,7 @@
    "IMAGE"
   ],
   [
-   31,
+   30,
    9,
    6,
    25,
@@ -1431,7 +1421,7 @@
    "SYNTAX_STRIP"
   ],
   [
-   32,
+   31,
    25,
    0,
    26,
@@ -1439,7 +1429,7 @@
    "IMAGE"
   ],
   [
-   33,
+   32,
    26,
    0,
    27,
@@ -1447,7 +1437,7 @@
    "VIDEO"
   ],
   [
-   34,
+   33,
    9,
    4,
    27,
@@ -1455,7 +1445,7 @@
    "AUDIO"
   ],
   [
-   35,
+   34,
    27,
    0,
    28,

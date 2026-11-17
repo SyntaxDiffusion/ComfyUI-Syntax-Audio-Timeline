@@ -2,7 +2,7 @@
  "id": "7e1a0c00-0000-4000-8000-443408813586",
  "revision": 0,
  "last_node_id": 28,
- "last_link_id": 36,
+ "last_link_id": 35,
  "nodes": [
   {
    "id": 1,
@@ -24,7 +24,7 @@
     "Node name for S&R": "MarkdownNote"
    },
    "widgets_values": [
-    "## Dialogue\n\nOne shot per image over your voice track, each cut moved into a pause, so no line is cut in half. Each shot hears its part of the voice, so the lips follow it.\n\n- **Track**: the dialogue recording. Put the images in the order of who speaks. With music under the voice, connect Audio Separation -> Vocals to **voice**.\n- **start_at**: where the first shot starts. The shots run to the end of the voice unless you set **duration**.\n- **Anchor**: every shot also sees this image as <Picture 2>, which holds the people and style across the cuts. Default: the first image; a character or style sheet works well.\n- **Timeline**: drag the yellow handles to set the range, double-click a shot to split it, right-click a cut to merge, *One shot* for a single long shot. Hover it for hints, **?** lists every control, **Analyse** shows the exact cuts without rendering.\n\n**This version: hits that land.** Full model, 30 steps, CFG 5 with the negative zeroed before the guide, so the picture is pushed onto the audio.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
+    "## Dialogue\n\nOne shot per image over your voice track, each cut moved into a pause, so no line is cut in half. Each shot hears its part of the voice, so the lips follow it.\n\n- **Track**: the dialogue recording. Put the images in the order of who speaks. With music under the voice, connect Audio Separation -> Vocals to **voice**.\n- **start_at**: where the first shot starts. The shots run to the end of the voice unless you set **duration**.\n- **Anchor** (optional): to hold a hard style or a character across the cuts, connect a character or style sheet to *Reference to Video*'s second image slot and add *drawn in the art style of <Picture 2>* to the prompt. Not a full scene: H3 may animate the anchor instead of the shot's image.\n- **Timeline**: drag the yellow handles to set the range, double-click a shot to split it, right-click a cut to merge, *One shot* for a single long shot. Hover it for hints, **?** lists every control, **Analyse** shows the exact cuts without rendering.\n\n**This version: hits that land.** Full model, 30 steps, CFG 5 with the negative zeroed before the guide, so the picture is pushed onto the audio.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
    ]
   },
   {
@@ -79,7 +79,7 @@
      "name": "STRING",
      "type": "STRING",
      "links": [
-      11
+      10
      ]
     }
    ],
@@ -87,7 +87,7 @@
     "Node name for S&R": "PrimitiveStringMultiline"
    },
    "widgets_values": [
-    "A scene set in <Picture 1>, with the exact characters and style of <Picture 2>. The character speaks the line heard in the audio, mouth moving in sync with the voice, with natural expressions and small gestures, and holds still in the silences. Static camera, no text."
+    "A scene in the exact style, characters and setting of <Picture 1>. The character speaks the line heard in the audio, mouth moving in sync with the voice, with natural expressions and small gestures, and holds still in the silences. Static camera, no text."
    ],
    "title": "Prompt"
   },
@@ -262,9 +262,7 @@
     {
      "name": "IMAGE",
      "type": "IMAGE",
-     "links": [
-      10
-     ]
+     "links": []
     },
     {
      "name": "MASK",
@@ -279,7 +277,7 @@
     "shot_1.png",
     "image"
    ],
-   "title": "Anchor (<Picture 2> in every shot)"
+   "title": "Anchor (optional, see the note)"
   },
   {
    "id": 9,
@@ -345,7 +343,7 @@
      "name": "guide_audio",
      "type": "AUDIO",
      "links": [
-      16
+      15
      ],
      "shape": 6
     },
@@ -353,7 +351,7 @@
      "name": "length",
      "type": "INT",
      "links": [
-      12
+      11
      ],
      "shape": 6
     },
@@ -361,7 +359,7 @@
      "name": "frames",
      "type": "INT",
      "links": [
-      30
+      29
      ],
      "shape": 6
     },
@@ -369,7 +367,7 @@
      "name": "soundtrack",
      "type": "AUDIO",
      "links": [
-      35
+      34
      ]
     },
     {
@@ -383,7 +381,7 @@
      "name": "strip",
      "type": "SYNTAX_STRIP",
      "links": [
-      32
+      31
      ],
      "shape": 6
     }
@@ -448,8 +446,8 @@
      "name": "MODEL",
      "type": "MODEL",
      "links": [
-      18,
-      21
+      17,
+      20
      ]
     }
    ],
@@ -515,7 +513,7 @@
      "type": "VAE",
      "links": [
       8,
-      28
+      27
      ]
     }
    ],
@@ -546,7 +544,7 @@
      "name": "VAE",
      "type": "VAE",
      "links": [
-      14
+      13
      ]
     }
    ],
@@ -590,12 +588,12 @@
     {
      "name": "ref_images.ref_image_1",
      "type": "IMAGE",
-     "link": 10
+     "link": null
     },
     {
      "name": "prompt",
      "type": "STRING",
-     "link": 11,
+     "link": 10,
      "widget": {
       "name": "prompt"
      }
@@ -603,7 +601,7 @@
     {
      "name": "length",
      "type": "INT",
-     "link": 12,
+     "link": 11,
      "widget": {
       "name": "length"
      }
@@ -614,16 +612,16 @@
      "name": "positive",
      "type": "CONDITIONING",
      "links": [
-      13,
-      17
+      12,
+      16
      ]
     },
     {
      "name": "LATENT",
      "type": "LATENT",
      "links": [
-      15,
-      26
+      14,
+      25
      ]
     }
    ],
@@ -631,7 +629,7 @@
     "Node name for S&R": "MiniMaxH3ReferenceToVideo"
    },
    "widgets_values": [
-    "A scene set in <Picture 1>, with the exact characters and style of <Picture 2>. The character speaks the line heard in the audio, mouth moving in sync with the voice, with natural expressions and small gestures, and holds still in the silences. Static camera, no text.",
+    "A scene in the exact style, characters and setting of <Picture 1>. The character speaks the line heard in the audio, mouth moving in sync with the voice, with natural expressions and small gestures, and holds still in the silences. Static camera, no text.",
     864,
     480,
     141,
@@ -656,22 +654,22 @@
     {
      "name": "positive",
      "type": "CONDITIONING",
-     "link": 13
+     "link": 12
     },
     {
      "name": "audio_vae",
      "type": "VAE",
-     "link": 14
+     "link": 13
     },
     {
      "name": "latent",
      "type": "LATENT",
-     "link": 15
+     "link": 14
     },
     {
      "name": "audio",
      "type": "AUDIO",
-     "link": 16
+     "link": 15
     }
    ],
    "outputs": [
@@ -679,7 +677,7 @@
      "name": "positive",
      "type": "CONDITIONING",
      "links": [
-      19
+      18
      ]
     }
    ],
@@ -709,7 +707,7 @@
     {
      "name": "conditioning",
      "type": "CONDITIONING",
-     "link": 17
+     "link": 16
     }
    ],
    "outputs": [
@@ -717,7 +715,7 @@
      "name": "CONDITIONING",
      "type": "CONDITIONING",
      "links": [
-      20
+      19
      ]
     }
    ],
@@ -745,17 +743,17 @@
     {
      "name": "model",
      "type": "MODEL",
-     "link": 18
+     "link": 17
     },
     {
      "name": "positive",
      "type": "CONDITIONING",
-     "link": 19
+     "link": 18
     },
     {
      "name": "negative",
      "type": "CONDITIONING",
-     "link": 20
+     "link": 19
     }
    ],
    "outputs": [
@@ -763,7 +761,7 @@
      "name": "GUIDER",
      "type": "GUIDER",
      "links": [
-      23
+      22
      ]
     }
    ],
@@ -794,7 +792,7 @@
      "name": "NOISE",
      "type": "NOISE",
      "links": [
-      22
+      21
      ]
     }
    ],
@@ -826,7 +824,7 @@
      "name": "SAMPLER",
      "type": "SAMPLER",
      "links": [
-      24
+      23
      ]
     }
    ],
@@ -855,7 +853,7 @@
     {
      "name": "model",
      "type": "MODEL",
-     "link": 21
+     "link": 20
     }
    ],
    "outputs": [
@@ -863,7 +861,7 @@
      "name": "SIGMAS",
      "type": "SIGMAS",
      "links": [
-      25
+      24
      ]
     }
    ],
@@ -894,27 +892,27 @@
     {
      "name": "noise",
      "type": "NOISE",
-     "link": 22
+     "link": 21
     },
     {
      "name": "guider",
      "type": "GUIDER",
-     "link": 23
+     "link": 22
     },
     {
      "name": "sampler",
      "type": "SAMPLER",
-     "link": 24
+     "link": 23
     },
     {
      "name": "sigmas",
      "type": "SIGMAS",
-     "link": 25
+     "link": 24
     },
     {
      "name": "latent_image",
      "type": "LATENT",
-     "link": 26
+     "link": 25
     }
    ],
    "outputs": [
@@ -922,7 +920,7 @@
      "name": "output",
      "type": "LATENT",
      "links": [
-      27
+      26
      ]
     },
     {
@@ -954,12 +952,12 @@
     {
      "name": "samples",
      "type": "LATENT",
-     "link": 27
+     "link": 26
     },
     {
      "name": "vae",
      "type": "VAE",
-     "link": 28
+     "link": 27
     }
    ],
    "outputs": [
@@ -967,7 +965,7 @@
      "name": "IMAGE",
      "type": "IMAGE",
      "links": [
-      29
+      28
      ]
     }
    ],
@@ -994,12 +992,12 @@
     {
      "name": "image",
      "type": "IMAGE",
-     "link": 29
+     "link": 28
     },
     {
      "name": "length",
      "type": "INT",
-     "link": 30,
+     "link": 29,
      "widget": {
       "name": "length"
      }
@@ -1010,7 +1008,7 @@
      "name": "IMAGE",
      "type": "IMAGE",
      "links": [
-      31
+      30
      ]
     }
    ],
@@ -1041,12 +1039,12 @@
     {
      "name": "images",
      "type": "IMAGE",
-     "link": 31
+     "link": 30
     },
     {
      "name": "strip",
      "type": "SYNTAX_STRIP",
-     "link": 32
+     "link": 31
     }
    ],
    "outputs": [
@@ -1054,7 +1052,7 @@
      "name": "IMAGE",
      "type": "IMAGE",
      "links": [
-      33
+      32
      ]
     }
    ],
@@ -1082,7 +1080,7 @@
     {
      "name": "images",
      "type": "IMAGE",
-     "link": 33
+     "link": 32
     },
     {
      "name": "audio",
@@ -1095,7 +1093,7 @@
      "name": "VIDEO",
      "type": "VIDEO",
      "links": [
-      34
+      33
      ]
     }
    ],
@@ -1129,12 +1127,12 @@
     {
      "name": "videos.video0",
      "type": "VIDEO",
-     "link": 34
+     "link": 33
     },
     {
      "name": "complete_audio",
      "type": "AUDIO",
-     "link": 35
+     "link": 34
     }
    ],
    "outputs": [
@@ -1142,7 +1140,7 @@
      "name": "VIDEO",
      "type": "VIDEO",
      "links": [
-      36
+      35
      ]
     }
    ],
@@ -1172,7 +1170,7 @@
     {
      "name": "video",
      "type": "VIDEO",
-     "link": 36
+     "link": 35
     }
    ],
    "outputs": [],
@@ -1262,14 +1260,6 @@
   ],
   [
    10,
-   8,
-   0,
-   15,
-   3,
-   "IMAGE"
-  ],
-  [
-   11,
    3,
    0,
    15,
@@ -1277,7 +1267,7 @@
    "STRING"
   ],
   [
-   12,
+   11,
    9,
    2,
    15,
@@ -1285,7 +1275,7 @@
    "INT"
   ],
   [
-   13,
+   12,
    15,
    0,
    16,
@@ -1293,7 +1283,7 @@
    "CONDITIONING"
   ],
   [
-   14,
+   13,
    14,
    0,
    16,
@@ -1301,7 +1291,7 @@
    "VAE"
   ],
   [
-   15,
+   14,
    15,
    1,
    16,
@@ -1309,7 +1299,7 @@
    "LATENT"
   ],
   [
-   16,
+   15,
    9,
    1,
    16,
@@ -1317,7 +1307,7 @@
    "AUDIO"
   ],
   [
-   17,
+   16,
    15,
    0,
    17,
@@ -1325,7 +1315,7 @@
    "CONDITIONING"
   ],
   [
-   18,
+   17,
    11,
    0,
    18,
@@ -1333,7 +1323,7 @@
    "MODEL"
   ],
   [
-   19,
+   18,
    16,
    0,
    18,
@@ -1341,7 +1331,7 @@
    "CONDITIONING"
   ],
   [
-   20,
+   19,
    17,
    0,
    18,
@@ -1349,7 +1339,7 @@
    "CONDITIONING"
   ],
   [
-   21,
+   20,
    11,
    0,
    21,
@@ -1357,7 +1347,7 @@
    "MODEL"
   ],
   [
-   22,
+   21,
    19,
    0,
    22,
@@ -1365,7 +1355,7 @@
    "NOISE"
   ],
   [
-   23,
+   22,
    18,
    0,
    22,
@@ -1373,7 +1363,7 @@
    "GUIDER"
   ],
   [
-   24,
+   23,
    20,
    0,
    22,
@@ -1381,7 +1371,7 @@
    "SAMPLER"
   ],
   [
-   25,
+   24,
    21,
    0,
    22,
@@ -1389,7 +1379,7 @@
    "SIGMAS"
   ],
   [
-   26,
+   25,
    15,
    1,
    22,
@@ -1397,7 +1387,7 @@
    "LATENT"
   ],
   [
-   27,
+   26,
    22,
    0,
    23,
@@ -1405,7 +1395,7 @@
    "LATENT"
   ],
   [
-   28,
+   27,
    13,
    0,
    23,
@@ -1413,7 +1403,7 @@
    "VAE"
   ],
   [
-   29,
+   28,
    23,
    0,
    24,
@@ -1421,7 +1411,7 @@
    "IMAGE"
   ],
   [
-   30,
+   29,
    9,
    3,
    24,
@@ -1429,7 +1419,7 @@
    "INT"
   ],
   [
-   31,
+   30,
    24,
    0,
    25,
@@ -1437,7 +1427,7 @@
    "IMAGE"
   ],
   [
-   32,
+   31,
    9,
    6,
    25,
@@ -1445,7 +1435,7 @@
    "SYNTAX_STRIP"
   ],
   [
-   33,
+   32,
    25,
    0,
    26,
@@ -1453,7 +1443,7 @@
    "IMAGE"
   ],
   [
-   34,
+   33,
    26,
    0,
    27,
@@ -1461,7 +1451,7 @@
    "VIDEO"
   ],
   [
-   35,
+   34,
    9,
    4,
    27,
@@ -1469,7 +1459,7 @@
    "AUDIO"
   ],
   [
-   36,
+   35,
    27,
    0,
    28,

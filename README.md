@@ -57,7 +57,8 @@ The editor on the node shows the track's waveform as soon as a Load Audio is con
 - **CFG lands the hits.** The full model at 30 steps and CFG 5, with the negative zeroed *before* the guide (*ConditioningZeroOut* on the Reference to Video output), pushes the picture onto the sound: motion vs drum hits +0.89 on a 5 s test clip. The 4-step turbo LoRA at CFG 1 follows only loosely (+0.27), and raising CFG on the LoRA burns the image.
 - **Guide with the stem, not the mix.** A full mix never goes quiet, so H3 finds no hits in it, and beat detection on a busy mix can land the downbeat on the off-beat.
 - **Ask for stillness between hits.** A prompt that implies constant motion ignores the guide.
-- **Anchor every shot.** Each shot sees its own image as `<Picture 1>` and one shared *Anchor* image as `<Picture 2>` (a character or style sheet, or the first image), which keeps people and style the same across cuts.
+- **One reference image per shot** holds the character, setting and palette (`<Picture 1>` in the prompt).
+- **An anchor for hard styles.** To keep a hard style or a character the same across cuts, connect a character or style sheet to *Reference to Video*'s second image slot (every shot gets it) and add *drawn in the art style of `<Picture 2>`* to the prompt. Use a sheet, not a scene: with a full scene as the anchor, H3 animated the anchor instead of the shot's own image in 2 of 4 shots.
 - **Name the speaker** when a shot has two people, or the wrong one may talk.
 - **Long shots need Context Windows.** Past 15 s, H3's trained range, keep *MiniMax H3 Context Windows* on the model (as in `timeline_base`): the look holds for 30 s and more, but motion follows the beat more loosely than in short shots.
 
