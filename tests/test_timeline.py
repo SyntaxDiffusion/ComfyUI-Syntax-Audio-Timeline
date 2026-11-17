@@ -75,11 +75,25 @@ def test_bars_are_shared_out_longest_shots_first():
     assert cuts[-1] == pytest.approx(21.0)
 
 
-def test_kick_only_keeps_the_low_thump_and_drops_the_hats():
-    t = torch.arange(SR) / SR
-    low, high = torch.sin(2 * math.pi * 60 * t), torch.sin(2 * math.pi * 8000 * t)
-    out = timeline.kick_only((low + high).view(1, 1, -1), SR)[0, 0]
-    assert torch.allclose(out[SR // 4:-SR // 4], low[SR // 4:-SR // 4], atol=0.05)
+def kick_times(bpm, bars, offset):
+    """When drum_loop(four_on_floor=False) hits the kick: beat 1 and the 'and' of 3."""
+    beat = 60.0 / bpm
+    return [offset + b * 4 * beat + d * beat for b in range(bars) for d in (0, 2.5)]
+
+
+def test_find_kicks_takes_the_kicks_not_the_snare_or_hats():
+    x = drum_loop(110, bars=8, offset=0.4, sixteenths=True)
+    kicks = kick_times(110, 8, 0.4)
+    found = timeline.find_kicks(x, SR)
+    assert len(found) == len(kicks)
+    assert all(abs(f - k) < 0.01 for f, k in zip(found, kicks))       # on the hit, not a frame early
+
+
+def test_the_grid_moves_onto_the_kicks():
+    grid = {"bpm": 120.0, "downbeat": 0.75}                            # half a beat late
+    kicks = [0.5 + 0.5 * i for i in range(16)]
+    assert timeline.on_the_kicks(grid, kicks)["downbeat"] == pytest.approx(0.5)
+    assert timeline.on_the_kicks({"bpm": 120.0, "downbeat": 0.5}, kicks)["downbeat"] == pytest.approx(0.5)
 
 
 def test_guide_slices_cover_the_generated_length_and_pad_past_the_end():
@@ -218,17 +232,29 @@ def test_duration_zero_runs_to_the_end_of_the_sound():
     assert 0.5 + frames[0] / 24 == pytest.approx(14.0, abs=0.05)
 
 
-def test_music_is_guided_by_the_kick_of_the_drums_input():
+def test_music_is_guided_by_just_the_kicks():
+    x = drum_loop(120, bars=8, offset=0.5, sixteenths=True)
+    track = {"waveform": x.view(1, 1, -1), "sample_rate": SR}
+    out = nodes.SyntaxTimeline.execute(track=track, images={"image0": torch.zeros(1, 8, 8, 3)}, start_at=0.0,
+                                       duration=8.0, bpm=120.0, mode="music", edits='{"hits": [1.25]}')
+    guide = out.result[1][0]["waveform"][0, 0]
+    start = out.ui["timeline"][0]["cuts"][0]
+    energy = guide[: 150 * (SR // 20)].square().view(150, -1).sum(1)   # 50 ms bins over 7.5 s
+    loud = {int(i) for i in torch.nonzero(energy > energy.max() * 0.05).flatten()}
+    on_kicks = {int((k - start) * 20) + d for k in kick_times(120, 8, 0.5) for d in (0, 1, 2, 3)}
+    assert loud and loud <= on_kicks                                  # sound only at the kicks: no snare, hats or drawn hit
+    assert "kicks" in out.result[5] and "connect the drums stem" in out.result[5]
+
+
+def test_music_finds_the_kicks_in_the_drums_input_when_given():
     drums = {"waveform": drum_loop(120, bars=8, offset=0.5).view(1, 1, -1), "sample_rate": SR}
     hats = torch.sin(2 * math.pi * 9000 * torch.arange(drums["waveform"].shape[-1]) / SR).view(1, 1, -1)
     track = {"waveform": hats, "sample_rate": SR}
     out = nodes.SyntaxTimeline.execute(track=track, drums=drums, images={"image0": torch.zeros(1, 8, 8, 3)}, start_at=0.0,
                                        duration=4.0, bpm=0.0, mode="music")
-    assert out.ui["timeline"][0]["bpm"] == pytest.approx(120, rel=0.01)   # the grid comes from the drums, not the track
-    guide = out.result[1][0]["waveform"]
-    spec = torch.fft.rfft(guide[0, 0]).abs()
-    f = torch.fft.rfftfreq(guide.shape[-1], 1 / SR)
-    assert spec[f > 2000].max() < spec[f < 150].max() * 0.01
+    ui = out.ui["timeline"][0]
+    assert ui["bpm"] == pytest.approx(120, rel=0.01)                 # the grid comes from the drums, not the track
+    assert ui["kicks"] == pytest.approx(kick_times(120, 8, 0.5), abs=0.01)
 
 
 def test_edited_cuts_override_the_automatic_ones():
@@ -266,7 +292,7 @@ def test_timeline_sends_the_beat_grid_to_the_editor():
 
 def test_hit_sounds_land_only_at_the_marked_times():
     sr = 32000
-    x = timeline.hits_audio([1.0, 2.5], 4.0, sr, "thump")
+    x = timeline.drawn_audio([(1.0, "thump"), (2.5, "thump")], [], 4.0, sr)
     assert x.numel() == 4 * sr
     energy = x.square().view(-1, sr // 10).sum(1)          # 0.1 s bins
     loud = set(torch.nonzero(energy > energy.max() * 0.05).flatten().tolist())
@@ -284,7 +310,7 @@ def test_drawn_hits_without_a_track_drive_the_shots():
     assert cuts[-1] == pytest.approx(12.0, abs=0.05)            # the whole timeline
     assert not any(abs(c - h) < 0.3 for c in cuts[1:-1] for h in (1.5, 5.0, 9.0))   # no cut on a hit
     assert soundtrack["waveform"].abs().max() > 0                # the hits are the soundtrack
-    assert out.ui["timeline"][0]["hits"] == [1.5, 5.0, 9.0]
+    assert strip[0]["hits"] == [36, 120, 216]
 
 
 def test_drawn_hits_are_mixed_into_a_track_guide():
@@ -298,12 +324,6 @@ def test_drawn_hits_are_mixed_into_a_track_guide():
     i = int(4.0 * SR)
     assert plain["waveform"][..., i:i + 2000].abs().max() == 0
     assert mixed["waveform"][..., i:i + 2000].abs().max() > 0
-
-
-def test_no_track_and_no_hits_says_what_to_do():
-    images = {"image0": torch.zeros(1, 8, 8, 3)}
-    with pytest.raises(ValueError, match="track"):
-        nodes.SyntaxTimeline.execute(track=None, images=images, start_at=0.0, duration=8.0, bpm=0.0, mode="action")
 
 
 def test_timeline_gives_each_shot_its_slice_of_the_strip():
@@ -334,3 +354,62 @@ def test_preview_strip_draws_at_the_bottom_with_a_playhead_across_the_whole_vide
     assert not torch.equal(a[:, -6:], first[:, -6:])
     assert _yellow_x(a[0]) < 10 and 40 < _yellow_x(a[-1]) < 50   # first shot: left half
     assert 45 < _yellow_x(b[0]) < 55 and _yellow_x(b[-1]) > 85   # second shot carries on to the right edge
+
+
+@pytest.mark.parametrize("sound", timeline.CURVE_SOUNDS)
+def test_a_curve_sounds_only_where_it_is_drawn_and_louder_where_it_is_higher(sound):
+    sr = 16000
+    x = timeline.drawn_audio([], [{"sound": sound, "points": [[1.0, 0.2], [2.0, 0.2], [2.01, 1.0], [3.0, 1.0]]}], 4.0, sr)
+    level = x.square().view(-1, sr // 4).mean(1).sqrt()                 # 0.25 s bins
+    assert level[:4].max() == 0 and level[13:].max() == 0             # silent before and after the curve
+    assert level[9:12].mean() > 1.5 * level[4:8].mean()               # the high part is louder
+
+
+def test_each_hit_keeps_its_own_sound():
+    images = {"image0": torch.zeros(1, 8, 8, 3)}
+    out = nodes.SyntaxTimeline.execute(track=None, images=images, start_at=0.0, duration=4.0, bpm=0.0, mode="action",
+                                       hit_sound="thump", edits='{"hits": [1.0, [2.0, "boom"]]}').result
+    x = out[4]["waveform"][0, 0]
+    sr = out[4]["sample_rate"]
+    assert x[int(1.3 * sr):int(1.9 * sr)].abs().max() < 0.01          # the thump is short
+    assert x[int(2.5 * sr):int(2.9 * sr)].abs().max() > 0.01           # the boom rings on
+
+
+def test_curves_drive_a_blank_action_timeline():
+    images = {f"image{i}": torch.zeros(1, 8, 8, 3) for i in range(2)}
+    out = nodes.SyntaxTimeline.execute(track=None, images=images, start_at=0.0, duration=8.0, bpm=0.0, mode="action",
+                                       edits='{"curves": [{"sound": "motor", "points": [[1, 0], [2, 1], [3, 0]]}, {"sound": "flow", "points": [[5, 0.5], [7, 0.5]]}]}')
+    frames = out.result[3]
+    assert sum(frames) == 8 * 24 and out.ui["timeline"][0]["mode"] == "action"
+
+
+def test_dialogue_ignores_drawn_hits():
+    x = speech([(0.5, 3.0)], 6.0)
+    track = {"waveform": x.view(1, 1, -1), "sample_rate": SR}
+    guide = nodes.SyntaxTimeline.execute(track=track, images={"image0": torch.zeros(1, 8, 8, 3)}, start_at=0.0, duration=0.0, bpm=0.0,
+                                         mode="dialogue", edits='{"cuts": [0.0, 6.0], "hits": [4.0]}').result[1][0]
+    assert guide["waveform"][..., int(4.0 * SR):int(4.0 * SR) + 2000].abs().max() == 0
+
+
+def test_the_editor_gets_the_waveform_of_any_track():
+    x = speech([(0.5, 3.0)], 6.0)
+    track = {"waveform": x.view(1, 1, -1), "sample_rate": SR}
+    ui = nodes.SyntaxTimeline.execute(track=track, images={"image0": torch.zeros(1, 8, 8, 3)}, start_at=0.0, duration=0.0, bpm=0.0,
+                                      mode="dialogue").ui["timeline"][0]
+    p = ui["peaks"]
+    assert 1900 <= len(p) <= 2100 and max(p) == 1.0
+    assert max(p[: len(p) // 15]) < 0.01 < min(p[len(p) // 10: len(p) // 3])   # silent, then the line
+
+
+def test_a_blank_timeline_runs_duration_seconds_from_start_at():
+    images = {f"image{i}": torch.zeros(1, 8, 8, 3) for i in range(2)}
+    out = nodes.SyntaxTimeline.execute(track=None, images=images, start_at=13.64, duration=14.0, bpm=0.0, mode="action",
+                                       edits='{"hits": [15.0, 20.0, 25.0]}')
+    assert sum(out.result[3]) == pytest.approx(14.0 * 24, abs=2)
+    assert out.ui["timeline"][0]["cuts"][0] == pytest.approx(13.64)
+
+
+def test_an_empty_blank_timeline_still_runs_with_a_silent_guide():
+    out = nodes.SyntaxTimeline.execute(track=None, images={"image0": torch.zeros(1, 8, 8, 3)}, start_at=0.0, duration=6.0, bpm=0.0,
+                                       mode="action").result
+    assert out[3] == [144] and out[1][0]["waveform"].abs().max() == 0

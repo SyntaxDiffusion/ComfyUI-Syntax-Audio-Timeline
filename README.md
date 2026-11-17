@@ -36,26 +36,28 @@ Two nodes. Everything else in the workflows is core ComfyUI.
 
 **Syntax Timeline** takes your track and any number of images and cuts the track into shots. Pick a **mode**:
 
-- **music**: shots of whole bars from the downbeat after *start_at*, each guided by the **kick** of its part of the song. Connect the drums stem to **drums** (Audio Separation -> Drums); the node keeps only the kick, and finds the tempo and downbeat from the full kit. *bpm* 0 finds the tempo.
+- **music**: shots of whole bars from the downbeat after *start_at*, each guided by just the **kick drum hits** of its part of the song: the node finds the kicks and puts a clean thump on each, nothing else of the song. Connect the drums stem to **drums** (Audio Separation -> Drums) for clean kicks; from a full mix alone, hard bass notes can count as kicks too. The beat grid is set on the kicks, so cuts land on the beat. *bpm* 0 finds the tempo.
 - **dialogue**: cuts moved into the pauses, so no line is cut in half, each shot guided by its part of the **voice** (Audio Separation -> Vocals, or the track if it is only voice).
-- **action**: cuts moved between hits, each shot guided by its part of the track.
+- **action**: cuts moved between hits, each shot guided by its part of the track plus the hits and sounds you draw on the timeline. With no track, the timeline is blank and what you draw is the sound.
 
 *duration* is how long the video runs from *start_at*, split across the images; 0 gives about 5.5 s per image for music and runs to the end of the sound otherwise. Each shot hears its part of the guide from its first frame, so H3 times the action to it. The finished video carries your original track.
 
-The editor on the node shows the track's waveform as soon as a Load Audio is connected, and the shots right away. Hover it for hints; **?** lists every control.
+The editor on the node shows the shots right away, and the track's waveform (at once from a Load Audio wired straight in, otherwise after *Analyse*). Hover it for hints; **?** lists every control.
 
 - **Range**: drag the yellow handles to set where the video starts and ends.
 - **Shots**: drag a white cut to move it, double-click a shot to split it, right-click a cut to merge the two shots. *One shot* makes a single shot over the whole range; *By images* goes back to one shot per image. More shots than images reuse the images in order, so one image can fill 30 s as one shot or several.
-- **Hits** (the top lane): double-click to mark a hit, drag to move it, right-click to delete it. Each hit adds a *hit_sound* (thump, crash or boom) to the guide. With no track, set *duration* for a blank timeline; the hits drive the action and are the soundtrack.
-- music snaps to bars; hold Alt for beats, Shift to move freely.
-- **Analyse** runs just the Timeline (and what feeds it) to find the beat and the exact cuts without rendering.
+- **Kicks** (music, the top lane): the kick drum hits the last run found.
+- **Hits** (action, the top lane): double-click to add a hit, double-click a hit to change its sound (thump for punches, crash for smashes, boom for explosions), drag to move it, right-click to delete it. New hits get *hit_sound*.
+- **Drawing** (action, the big area): pick a sound in the **Draw** row (flow: wind, water, light; motor: an engine revving; pulse: magic, sci-fi; mumble: someone talking) and drag to draw it. Higher is louder or faster; draw over a part to redraw it, right-drag to erase, the sound's x clears it. In action the shots sit in the strip along the bottom: double-click it to split a shot.
+- music snaps cuts to bars; hold Alt for beats, Shift to move freely.
+- **Analyse** runs just the Timeline (and what feeds it) to find the beat, the kicks, the waveform and the exact cuts without rendering.
 
 **Syntax Preview Strip** is optional: it draws the guide's loudness, the cuts, the hits and a playhead along the bottom of each shot, to check that the action lands. Delete it for a clean video.
 
 ## Getting good results
 
 - **CFG lands the hits.** The full model at 30 steps and CFG 5, with the negative zeroed *before* the guide (*ConditioningZeroOut* on the Reference to Video output), pushes the picture onto the sound: motion vs drum hits +0.89 on a 5 s test clip. The 4-step turbo LoRA at CFG 1 follows only loosely (+0.27), and raising CFG on the LoRA burns the image.
-- **Guide with the stem, not the mix.** A full mix never goes quiet, so H3 finds no hits in it, and beat detection on a busy mix can land the downbeat on the off-beat.
+- **Find the kicks in the drums stem.** On a busy mix, an 808 or metal, hard bass notes look like kicks; the stem has no bass.
 - **Ask for stillness between hits.** A prompt that implies constant motion ignores the guide.
 - **One reference image per shot** holds the character, setting and palette (`<Picture 1>` in the prompt).
 - **An anchor for hard styles.** To keep a hard style or a character the same across cuts, connect a character or style sheet to *Reference to Video*'s second image slot (every shot gets it) and add *drawn in the art style of `<Picture 2>`* to the prompt. Use a sheet, not a scene: with a full scene as the anchor, H3 animated the anchor instead of the shot's own image in 2 of 4 shots.
@@ -77,7 +79,7 @@ Join the shots with core nodes: *Get Image from Batch* (length from *frames*) an
 
 ## Credits
 
-The idea of steering H3's action with a guide sound comes from [Nekodificador](https://x.com/Nekodificador)'s event curves in [ComfyUI-NKD-Basic-Tools](https://github.com/Nekodificador/ComfyUI-NKD-Basic-Tools). The earlier curve-based nodes of this pack are on the `v1` branch.
+The idea of steering H3's action with a guide sound comes from [Nekodificador](https://x.com/Nekodificador)'s event curves in [ComfyUI-NKD-Basic-Tools](https://github.com/Nekodificador/ComfyUI-NKD-Basic-Tools).
 
 ## License
 

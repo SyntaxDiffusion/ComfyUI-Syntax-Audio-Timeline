@@ -39,11 +39,61 @@ def bar_cuts(downbeat, bpm, bars, n_shots):
     return cuts
 
 
-def kick_only(waveform, sample_rate, cutoff=100.0):
-    """The kick drum out of a drums stem: a 4th-order low-pass, so the hats and most of the snare drop away."""
-    spec = torch.fft.rfft(waveform.float(), dim=-1)
-    f = torch.fft.rfftfreq(waveform.shape[-1], 1.0 / sample_rate, device=waveform.device)
-    return torch.fft.irfft(spec / torch.sqrt(1 + (f / cutoff) ** 8), n=waveform.shape[-1], dim=-1).to(waveform.dtype)
+def _band(x, sample_rate, lo, hi):
+    f = torch.fft.rfftfreq(x.numel(), 1 / sample_rate)
+    return torch.fft.irfft(torch.fft.rfft(x) * ((f >= lo) & (f < hi)), x.numel())
+
+
+def find_kicks(mono, sample_rate):
+    """Kick drum hits (seconds) in a drums stem: rises in the 35-120 Hz band above its own held level, so
+    the ring of a tom or a bass note doesn't count twice. In a full mix, bass notes that start hard count too."""
+    mono = mono.float()
+    hop = round(sample_rate * 0.005)
+    n_fft = 1 << round(math.log2(sample_rate * 0.093))
+    spec = torch.stft(mono, n_fft, hop_length=hop, window=torch.hann_window(n_fft), return_complex=True).abs()
+    f = torch.fft.rfftfreq(n_fft, 1 / sample_rate)
+    low = spec[(f >= 35) & (f < 120)]
+    held = torch.nn.functional.pad(low.unsqueeze(0), (50, 50), mode="replicate").squeeze(0).unfold(1, 101, 1).quantile(0.3, dim=-1)
+    energy = torch.relu(low - held).sum(0)
+    energy = torch.log1p(energy / (energy.max() + 1e-9) * 3)
+    onset = torch.relu(torch.diff(energy, prepend=energy[:1]))
+    onset = torch.nn.functional.avg_pool1d(onset.view(1, 1, -1), 3, 1, 1).flatten()
+    if not (onset > 0).any():
+        return []
+    # peaks: the highest within 90 ms, above the median of the second around it and a floor
+    peak = torch.nn.functional.max_pool1d(onset.view(1, 1, -1), 37, 1, 18).flatten()
+    median = torch.nn.functional.pad(onset.view(1, -1), (100, 100), mode="replicate").flatten().unfold(0, 201, 1).median(-1).values
+    floor = 0.25 * torch.quantile(onset[onset > 0], 0.98)
+    found = torch.nonzero((onset == peak) & (onset > median + 0.5 * floor) & (onset > floor)).flatten() * hop
+
+    # the 93 ms STFT frame blurs the time: each hit is where the low end rises fastest near its frame
+    w = round(0.002 * sample_rate) * 2 + 1
+    level = torch.nn.functional.avg_pool1d(_band(mono, sample_rate, 30, 200).square().view(1, 1, -1), w, 1, w // 2).flatten().sqrt()
+    rise = torch.diff(level, prepend=level[:1])
+    kicks, reach = [], round(0.08 * sample_rate)
+    for i in found.tolist():
+        a = max(i - reach, 0)
+        t = (a + int(rise[a:i + reach].argmax())) / sample_rate
+        if not kicks or t - kicks[-1] > 0.03:
+            kicks.append(t)
+    return kicks
+
+
+def on_the_kicks(grid, kicks):
+    """`grid` moved half a beat when most kicks land on its off-beats: in a 4/4 song the kick is on the beat."""
+    beat = 60.0 / grid["bpm"]
+    phase = [((k - grid["downbeat"]) / beat) % 1 for k in kicks]
+    if sum(abs(p - 0.5) < 0.15 for p in phase) > sum(min(p, 1 - p) < 0.15 for p in phase):
+        d = grid["downbeat"] + beat / 2
+        return {**grid, "downbeat": d - beat if d - beat >= 0 else d}
+    return grid
+
+
+def peaks(mono, n=2000):
+    """The loudest sample in each of `n` stretches, 0..1, for drawing the waveform."""
+    step = max(1, mono.numel() // n)
+    p = mono[: mono.numel() // step * step].float().abs().view(-1, step).amax(1)
+    return [round(v, 3) for v in (p / p.max().clamp(min=1e-9)).tolist()]
 
 
 def _loudness(mono, sample_rate, rate=ENV_RATE):
@@ -91,39 +141,93 @@ def pause_cuts(mono, sample_rate, start, n_shots, end=None, move_end=False):
 
 
 def _hit(sound, sample_rate):
-    """One synthetic hit: thump (punches, blows), crash (cymbals) or boom (thunder, explosions)."""
+    """One synthetic hit: thump (punches, blows, kicks), crash (cymbals) or boom (thunder, explosions)."""
     def noise(n, seed):
         return torch.randn(n, generator=torch.Generator().manual_seed(seed))
-
-    def band(x, lo, hi):
-        f = torch.fft.rfftfreq(x.numel(), 1 / sample_rate)
-        return torch.fft.irfft(torch.fft.rfft(x) * ((f >= lo) & (f < hi)), x.numel())
 
     t = torch.arange(int({"thump": 0.15, "crash": 0.6, "boom": 1.0}[sound] * sample_rate)) / sample_rate
     if sound == "thump":
         return noise(t.numel(), 1) * torch.exp(-t / 0.015) * 0.6 + torch.sin(2 * math.pi * 80 * t) * torch.exp(-t / 0.05) * 0.8
     if sound == "crash":
-        cymbal = band(noise(t.numel(), 4), 3000, 14000)
+        cymbal = _band(noise(t.numel(), 4), sample_rate, 3000, 14000)
         return cymbal / cymbal.std() * 0.5 * torch.exp(-t / 0.18) + torch.sin(2 * math.pi * 70 * t) * torch.exp(-t / 0.06)
     n = noise(t.numel(), 2)
-    crack = band(n, 1500, 9000) * torch.exp(-t / 0.06)
-    rumble = band(n, 25, 300) * torch.exp(-t / 0.4)
+    crack = _band(n, sample_rate, 1500, 9000) * torch.exp(-t / 0.06)
+    rumble = _band(n, sample_rate, 25, 300) * torch.exp(-t / 0.4)
     body = torch.sin(2 * math.pi * torch.cumsum(35 + 60 * torch.exp(-t / 0.1), 0) / sample_rate) * torch.exp(-t / 0.33)
     return torch.tanh(crack / crack.std() * 0.35 + rumble / rumble.std() * 0.9 + body * 1.2)
 
 
 HIT_SOUNDS = ["thump", "crash", "boom"]
+CURVE_SOUNDS = ["flow", "motor", "pulse", "mumble"]
 
 
-def hits_audio(times, duration, sample_rate, sound):
-    """Mono track of `duration` seconds with one `sound` hit at each time in `times` (seconds)."""
+def curve_level(points, n, sample_rate):
+    """A drawn curve at each of `n` samples: straight lines between its (seconds, 0..1) points, silent outside them."""
+    if len(points) < 2:
+        return torch.zeros(n)
+    t = torch.arange(n) / sample_rate
+    xs = torch.tensor([float(p[0]) for p in points])
+    ys = torch.tensor([float(p[1]) for p in points])
+    i = torch.searchsorted(xs, t).clamp(1, len(points) - 1)
+    w = ((t - xs[i - 1]) / (xs[i] - xs[i - 1]).clamp(min=1e-6)).clamp(0, 1)
+    return torch.where((t >= xs[0]) & (t <= xs[-1]), ys[i - 1] + (ys[i] - ys[i - 1]) * w, 0.0)
+
+
+def _curve_sound(sound, level, sample_rate, seed):
+    """A sound that follows `level` (0..1 per sample): flow (wind, water, light), motor (an engine, revving
+    as it rises), pulse (magic, sci-fi, faster as it rises) or mumble (someone talking, faster as it rises)."""
+    n = level.numel()
+    g = torch.Generator().manual_seed(seed)
+    on = (level > 0).float()
+
+    def wander(per_second):
+        v = torch.rand(int(n / sample_rate * per_second) + 2, generator=g)
+        return torch.nn.functional.interpolate(v.view(1, 1, -1), size=n, mode="linear", align_corners=True).flatten()
+
+    def cycles(freq):
+        return torch.cumsum(freq, 0) / sample_rate
+
+    if sound == "flow":
+        noise = torch.randn(n, generator=g)
+        low, high = _band(noise, sample_rate, 60, 500), _band(noise, sample_rate, 500, 5000)
+        return (low / low.std() * (1 - 0.5 * level) + high / high.std() * level) * level * (0.75 + 0.25 * wander(3))
+    if sound == "motor":
+        c = cycles(28 + 100 * level)
+        x = 2 * (c % 1) - 1 + 0.5 * torch.sin(math.pi * c) + 0.15 * torch.randn(n, generator=g)
+        return x * on * (0.35 + 0.65 * level)
+    if sound == "pulse":
+        c = cycles(180 * (1 + level))
+        beat = 0.5 + 0.5 * torch.sin(2 * math.pi * cycles(2 + 12 * level))
+        return (torch.sin(2 * math.pi * c) + 0.4 * torch.sin(3 * math.pi * c)) * beat * level
+    # mumble: a voice of harmonics under two formants, a new vowel each syllable
+    f0 = 115 + 45 * wander(2)
+    c = cycles(f0)
+    syllables = cycles(2.5 + 4.5 * level)
+    vowels = torch.tensor([(730.0, 1090.0), (530.0, 1840.0), (270.0, 2290.0), (570.0, 840.0), (300.0, 870.0), (660.0, 1720.0)])
+    vowel = vowels[torch.randint(0, len(vowels), (int(syllables[-1]) + 1,), generator=g)][syllables.long()]
+    x = torch.zeros(n)
+    for k in range(1, 25):
+        weight = torch.exp(-((k * f0 - vowel[:, 0]) / 90) ** 2) + 0.7 * torch.exp(-((k * f0 - vowel[:, 1]) / 150) ** 2) + 0.03
+        x += weight * torch.sin(2 * math.pi * k * c)
+    return x * torch.sin(math.pi * (syllables % 1)) ** 2 * on * (0.5 + 0.5 * level)
+
+
+def drawn_audio(hits, curves, duration, sample_rate):
+    """Mono track of `duration` seconds: a hit at each (seconds, sound) of `hits`, plus each curve's sound
+    ({"sound", "points": [(seconds, 0..1)]}) following its curve."""
     out = torch.zeros(round(duration * sample_rate))
-    one = _hit(sound, sample_rate)
-    for t in times:
+    for t, sound in hits:
+        one = _hit(sound, sample_rate)
         i = round(t * sample_rate)
         if 0 <= i < out.numel():
             n = min(one.numel(), out.numel() - i)
             out[i:i + n] += one[:n]
+    for k, curve in enumerate(curves):
+        level = curve_level(curve["points"], out.numel(), sample_rate)
+        if level.max() > 0:
+            x = _curve_sound(curve["sound"], level, sample_rate, k)
+            out += x / x.abs().max() * 0.6
     peak = out.abs().max()
     return out / peak * 0.9 if peak > 0 else out
 
