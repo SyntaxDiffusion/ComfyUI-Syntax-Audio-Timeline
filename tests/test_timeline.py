@@ -131,13 +131,6 @@ def test_timeline_node_cuts_one_shot_per_image_on_downbeats():
     assert "120.00 BPM" in info
 
 
-def test_join_shots_trims_each_shot_and_keeps_order():
-    shots = [torch.full((10, 4, 4, 3), float(i)) for i in range(3)]
-    out = nodes.SyntaxJoinShots.execute(shots, [4, 6, 5]).result[0]
-    assert out.shape[0] == 15
-    assert out[:4].eq(0).all() and out[4:10].eq(1).all() and out[10:].eq(2).all()
-
-
 def speech(segments, total, sr=SR, seed=1):
     """Noise bursts at the (start, end) seconds in `segments`, silence elsewhere."""
     g = torch.Generator().manual_seed(seed)
@@ -257,26 +250,31 @@ def test_no_track_and_no_hits_says_what_to_do():
         nodes.SyntaxTimeline.execute(track=None, images=images, start_at=0.0, bpm=0.0, bars_per_shot=0, cut_on="even", duration=8.0)
 
 
-def test_preview_strip_data_matches_the_cut():
+def test_timeline_gives_each_shot_its_slice_of_the_strip():
     images = {f"image{i}": torch.zeros(1, 8, 8, 3) for i in range(2)}
     out = nodes.SyntaxTimeline.execute(track=None, images=images, start_at=0.0, bpm=0.0, bars_per_shot=0, cut_on="even",
-                                       duration=8.0, preview_strip=True, edits='{"hits": [2.0, 6.0]}').result
-    frames, strip = out[3], out[6]
-    assert len(strip["level"]) == sum(frames) == 192
-    assert strip["cuts"] == [frames[0]]
-    assert strip["hits"] == [48, 144]
-    assert out[6] is not None and nodes.SyntaxTimeline.execute(track=None, images=images, start_at=0.0, bpm=0.0, bars_per_shot=0, cut_on="even",
-                                                              duration=8.0, edits='{"hits": [2.0]}').result[6] is None
+                                       duration=8.0, edits='{"hits": [2.0, 6.0]}').result
+    frames, strips = out[3], out[6]
+    assert len(strips) == 2
+    assert [s["offset"] for s in strips] == [0, frames[0]]
+    for s in strips:
+        assert len(s["level"]) == sum(frames) == 192             # the whole video, so the playhead runs across cuts
+        assert s["cuts"] == [frames[0]] and s["hits"] == [48, 144]
 
 
-def test_join_shots_draws_the_strip_at_the_bottom_with_a_moving_playhead():
-    shots = [torch.full((10, 64, 96, 3), 0.5) for _ in range(2)]
-    strip = {"level": [i / 19 for i in range(20)], "cuts": [10], "hits": [5]}
-    plain = nodes.SyntaxJoinShots.execute(shots, [10, 10]).result[0]
-    drawn = nodes.SyntaxJoinShots.execute(shots, [10, 10], [strip]).result[0]
-    assert torch.equal(drawn[:, :50], plain[:, :50])          # picture untouched above the strip
-    assert not torch.equal(drawn[:, -6:], plain[:, -6:])
-    px = drawn[:, -4:]
-    yellow = (px[..., 0] > 0.75) & (px[..., 1] > 0.65) & (px[..., 2] < 0.45)   # the yellow playhead
-    first, last = yellow[0].any(0).nonzero().float().mean(), yellow[-1].any(0).nonzero().float().mean()
-    assert first < 20 and last > 75
+def _yellow_x(frame):
+    px = frame[-4:]
+    yellow = (px[..., 0] > 0.75) & (px[..., 1] > 0.65) & (px[..., 2] < 0.45)
+    return yellow.any(0).nonzero().float().mean()
+
+
+def test_preview_strip_draws_at_the_bottom_with_a_playhead_across_the_whole_video():
+    level = [i / 19 for i in range(20)]
+    first = torch.full((10, 64, 96, 3), 0.5)
+    second = torch.full((10, 64, 96, 3), 0.5)
+    a = nodes.SyntaxPreviewStrip.execute(first, {"level": level, "cuts": [10], "hits": [5], "offset": 0}).result[0]
+    b = nodes.SyntaxPreviewStrip.execute(second, {"level": level, "cuts": [10], "hits": [5], "offset": 10}).result[0]
+    assert torch.equal(a[:, :50], first[:, :50])              # picture untouched above the strip
+    assert not torch.equal(a[:, -6:], first[:, -6:])
+    assert _yellow_x(a[0]) < 10 and 40 < _yellow_x(a[-1]) < 50   # first shot: left half
+    assert 45 < _yellow_x(b[0]) < 55 and _yellow_x(b[-1]) > 85   # second shot carries on to the right edge

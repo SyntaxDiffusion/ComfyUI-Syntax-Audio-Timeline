@@ -11,7 +11,7 @@ CUT_MODES = ["beats", "pauses", "even"]
 
 CATEGORY = "SyntaxNodes/Timeline"
 
-Timeline = io.Custom("SYNTAX_TIMELINE")
+Strip = io.Custom("SYNTAX_STRIP")
 
 
 def _mono(audio):
@@ -25,7 +25,7 @@ class SyntaxTimeline(io.ComfyNode):
             node_id="SyntaxTimeline",
             display_name="Syntax Timeline",
             category=CATEGORY,
-            description="Cut your track into one shot per image, on the beat. Each output is a list, so the nodes after it run once per shot; join the shots with Syntax Join Shots.",
+            description="Cut your track into one shot per image: on the beat, in the pauses, or around hits you mark. Most outputs are lists, so the nodes after it run once per shot; join the shot videos with Concatenate Video.",
             inputs=[
                 io.Audio.Input("track", optional=True,
                                tooltip="Your song, dialogue or sound effects. It sets the timeline and is the soundtrack of the finished video. Leave it empty to mark hits on a blank timeline."),
@@ -42,8 +42,6 @@ class SyntaxTimeline(io.ComfyNode):
                 io.Float.Input("duration", default=10.0, min=1.0, max=600.0, step=0.1, tooltip="Length of the timeline in seconds when there is no track."),
                 io.Combo.Input("hit_sound", options=HIT_SOUNDS, default="thump",
                                tooltip="The sound each marked hit makes in the guide: thump (punches, blows), crash (cymbals), boom (thunder, explosions)."),
-                io.Boolean.Input("preview_strip", default=False,
-                                 tooltip="Draw the guide's loudness, the cuts, the hits and a playhead along the bottom of the joined video (connect timeline to Syntax Join Shots)."),
                 io.String.Input("edits", default="", tooltip="Cuts and hits from the timeline editor, in seconds. Written by the editor; clear it to go back to automatic cuts."),
             ],
             has_intermediate_output=True,
@@ -54,13 +52,13 @@ class SyntaxTimeline(io.ComfyNode):
                 io.Int.Output(display_name="frames", is_output_list=True, tooltip="Frames each shot keeps in the cut."),
                 io.Audio.Output(display_name="soundtrack", tooltip="The part of the track the shots cover."),
                 io.String.Output(display_name="info"),
-                Timeline.Output(display_name="timeline", tooltip="For Syntax Join Shots: the preview strip."),
+                Strip.Output(display_name="strip", is_output_list=True, tooltip="For Syntax Preview Strip: each shot's part of the sync strip."),
             ],
         )
 
     @classmethod
     def execute(cls, images, start_at, bpm, bars_per_shot, cut_on="beats", duration=10.0, hit_sound="thump",
-                preview_strip=False, edits="", track=None, guide=None) -> io.NodeOutput:
+                edits="", track=None, guide=None) -> io.NodeOutput:
         images = [images[k] for k in sorted(images, key=lambda k: int(k[len("image"):])) if images[k] is not None]
         edits = json.loads(edits) if edits.strip() else {}
         hits = sorted(float(h) for h in edits.get("hits", []))
@@ -110,41 +108,37 @@ class SyntaxTimeline(io.ComfyNode):
             info += ". Shots over 15 s are outside H3's trained range: add images or move start_at."
         ui = {"timeline": [{"duration": track["waveform"].shape[-1] / track["sample_rate"], "mode": cut_on, "cuts": cuts, "hits": hits,
                             "bpm": grid["bpm"] if grid else None, "downbeat": grid["downbeat"] if grid else None}]}
-        strip = None
-        if preview_strip:
-            n = sum(s["frames"] for s in shots)
-            start = round(cuts[0] * H3_FPS)
-            covered = slice_audio(guide["waveform"], guide["sample_rate"], cuts[0], total)[0].float().mean(0)
-            strip = {"level": frame_levels(covered, guide["sample_rate"], n),
-                     "cuts": [round(c * H3_FPS) - start for c in cuts[1:-1]],
-                     "hits": [round(h * H3_FPS) - start for h in hits if 0 <= round(h * H3_FPS) - start < n]}
-        return io.NodeOutput(images, guides, [s["length"] for s in shots], [s["frames"] for s in shots], soundtrack, info, strip, ui=ui)
+        n = sum(s["frames"] for s in shots)
+        start = round(cuts[0] * H3_FPS)
+        covered = slice_audio(guide["waveform"], guide["sample_rate"], cuts[0], total)[0].float().mean(0)
+        whole = {"level": frame_levels(covered, guide["sample_rate"], n),
+                 "cuts": [round(c * H3_FPS) - start for c in cuts[1:-1]],
+                 "hits": [round(h * H3_FPS) - start for h in hits if 0 <= round(h * H3_FPS) - start < n]}
+        offsets = [0]
+        for s in shots[:-1]:
+            offsets.append(offsets[-1] + s["frames"])
+        strips = [{**whole, "offset": o} for o in offsets]
+        return io.NodeOutput(images, guides, [s["length"] for s in shots], [s["frames"] for s in shots], soundtrack, info, strips, ui=ui)
 
 
-class SyntaxJoinShots(io.ComfyNode):
+class SyntaxPreviewStrip(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         return io.Schema(
-            node_id="SyntaxJoinShots",
-            display_name="Syntax Join Shots",
+            node_id="SyntaxPreviewStrip",
+            display_name="Syntax Preview Strip",
             category=CATEGORY,
-            description="Trim each shot to its length on the timeline and join them in order.",
-            is_input_list=True,
+            description="Draw a sync strip along the bottom of a shot: the guide's loudness, the cuts, the hits and a playhead that runs across the whole video. To check that the action lands on the sound.",
             inputs=[
-                io.Image.Input("images", tooltip="The decoded shots."),
-                io.Int.Input("frames", force_input=True, tooltip="Syntax Timeline's frames output."),
-                Timeline.Input("timeline", optional=True, tooltip="Syntax Timeline's timeline output: draws the preview strip when preview_strip is on."),
+                io.Image.Input("images", tooltip="The shot, trimmed to its length."),
+                Strip.Input("strip", tooltip="Syntax Timeline's strip output."),
             ],
             outputs=[io.Image.Output()],
         )
 
     @classmethod
-    def execute(cls, images, frames, timeline=None) -> io.NodeOutput:
-        out = torch.cat([img[:f] for img, f in zip(images, frames)])
-        strip = timeline[0] if timeline else None
-        if strip:
-            out = strip_overlay(out, strip["level"], strip["cuts"], strip["hits"])
-        return io.NodeOutput(out)
+    def execute(cls, images, strip) -> io.NodeOutput:
+        return io.NodeOutput(strip_overlay(images, strip["level"], strip["cuts"], strip["hits"], strip["offset"]))
 
 
-NODES = [SyntaxTimeline, SyntaxJoinShots]
+NODES = [SyntaxTimeline, SyntaxPreviewStrip]

@@ -132,9 +132,10 @@ def _soft(signed_dist):
     return (signed_dist / 1.5 + 0.5).clamp(0.0, 1.0)
 
 
-def strip_overlay(images, level, cuts=(), hits=(), strip_fraction=0.12):
+def strip_overlay(images, level, cuts=(), hits=(), offset=0, strip_fraction=0.12):
     """Burn a strip into the bottom of the frames: the guide's loudness, white cut lines, red hit ticks
-    and a yellow playhead. `level` has one value per frame; `cuts` and `hits` are frame indices."""
+    and a yellow playhead. `level` has one value per frame of the whole video; `cuts` and `hits` are
+    frame indices in it; `images` start at frame `offset`."""
     out = images[..., :3].clone()
     n, height, width = out.shape[0], out.shape[1], out.shape[2]
     strip_h = max(8, round(height * strip_fraction))
@@ -148,10 +149,12 @@ def strip_overlay(images, level, cuts=(), hits=(), strip_fraction=0.12):
     fill = (0.22 * _soft(rows - y_col)).unsqueeze(-1)
     xs = torch.arange(width, device=dev, dtype=dt)
 
+    total = len(level)
+
     def marks(at, half_width):
         if not len(at):
             return torch.zeros(width, device=dev, dtype=dt)
-        px = torch.tensor(at, device=dev, dtype=dt).view(-1, 1) * (width - 1) / max(n - 1, 1)
+        px = torch.tensor(at, device=dev, dtype=dt).view(-1, 1) * (width - 1) / max(total - 1, 1)
         return _soft(half_width - (xs - px).abs()).amax(0)
 
     blue = torch.tensor((0.30, 0.62, 1.0), device=dev, dtype=dt)
@@ -165,7 +168,7 @@ def strip_overlay(images, level, cuts=(), hits=(), strip_fraction=0.12):
 
     region = out[:, height - strip_h:]
     region.mul_(0.2).add_(strip, alpha=0.8)
-    playhead = torch.linspace(0, width - 1, n, device=dev, dtype=dt).view(-1, 1)
+    playhead = (torch.arange(offset, offset + n, device=dev, dtype=dt) * (width - 1) / max(total - 1, 1)).view(-1, 1)
     head = _soft(1.5 - (xs.view(1, -1) - playhead).abs()).view(n, 1, width, 1)
     region.add_((torch.tensor((1.0, 0.84, 0.2), device=dev, dtype=dt) - region) * head)
     return out

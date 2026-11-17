@@ -1,8 +1,8 @@
 {
- "id": "7e1a0c00-0000-4000-8000-807921997746",
+ "id": "7e1a0c00-0000-4000-8000-101774391474",
  "revision": 0,
- "last_node_id": 25,
- "last_link_id": 33,
+ "last_node_id": 27,
+ "last_link_id": 35,
  "nodes": [
   {
    "id": 1,
@@ -24,7 +24,7 @@
     "Node name for S&R": "MarkdownNote"
    },
    "widgets_values": [
-    "## Action hits\n\nOne shot per image over a track of hits (punches, slams, impacts), each cut moved into a gap between hits. Each shot hears its hits, so the action lands on them.\n\n- **Track**: your sound effects, laid out in time. Ask for stillness between hits in the prompt.\n\n**This version: hits that land.** Full model, 30 steps, CFG 5 with the negative zeroed before the guide, so the picture is pushed onto the audio.\n\nNodes: Syntax Timeline and Syntax Join Shots; everything else is core."
+    "## Action hits\n\nOne shot per image over a track of hits (punches, slams, impacts), each cut moved into a gap between hits. Each shot hears its hits, so the action lands on them.\n\n- **Track**: your sound effects, laid out in time. Ask for stillness between hits in the prompt.\n\n**This version: hits that land.** Full model, 30 steps, CFG 5 with the negative zeroed before the guide, so the picture is pushed onto the audio.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
    ]
   },
   {
@@ -326,7 +326,7 @@
      "name": "soundtrack",
      "type": "AUDIO",
      "links": [
-      32
+      34
      ]
     },
     {
@@ -337,11 +337,12 @@
      ]
     },
     {
-     "name": "timeline",
-     "type": "SYNTAX_TIMELINE",
+     "name": "strip",
+     "type": "SYNTAX_STRIP",
      "links": [
-      30
-     ]
+      31
+     ],
+     "shape": 6
     }
    ],
    "properties": {
@@ -354,7 +355,6 @@
     0,
     10.0,
     "thump",
-    true,
     ""
    ]
   },
@@ -931,33 +931,31 @@
   },
   {
    "id": 23,
-   "type": "SyntaxJoinShots",
+   "type": "ImageFromBatch",
    "pos": [
-    620,
-    -70
+    120,
+    1060
    ],
    "size": [
-    420,
-    80
+    440,
+    82
    ],
    "flags": {},
    "order": 22,
    "mode": 0,
    "inputs": [
     {
-     "name": "images",
+     "name": "image",
      "type": "IMAGE",
      "link": 28
     },
     {
-     "name": "frames",
+     "name": "length",
      "type": "INT",
-     "link": 29
-    },
-    {
-     "name": "timeline",
-     "type": "SYNTAX_TIMELINE",
-     "link": 30
+     "link": 29,
+     "widget": {
+      "name": "length"
+     }
     }
    ],
    "outputs": [
@@ -965,25 +963,29 @@
      "name": "IMAGE",
      "type": "IMAGE",
      "links": [
-      31
+      30
      ]
     }
    ],
    "properties": {
-    "Node name for S&R": "SyntaxJoinShots"
+    "Node name for S&R": "ImageFromBatch"
    },
-   "widgets_values": []
+   "widgets_values": [
+    0,
+    141
+   ],
+   "title": "Trim to the shot"
   },
   {
    "id": 24,
-   "type": "CreateVideo",
+   "type": "SyntaxPreviewStrip",
    "pos": [
-    620,
-    40
+    120,
+    1170
    ],
    "size": [
-    420,
-    130
+    440,
+    60
    ],
    "flags": {},
    "order": 23,
@@ -992,12 +994,53 @@
     {
      "name": "images",
      "type": "IMAGE",
+     "link": 30
+    },
+    {
+     "name": "strip",
+     "type": "SYNTAX_STRIP",
      "link": 31
+    }
+   ],
+   "outputs": [
+    {
+     "name": "IMAGE",
+     "type": "IMAGE",
+     "links": [
+      32
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "SyntaxPreviewStrip"
+   },
+   "widgets_values": [],
+   "title": "Sync strip (delete to hide)"
+  },
+  {
+   "id": 25,
+   "type": "CreateVideo",
+   "pos": [
+    120,
+    1260
+   ],
+   "size": [
+    440,
+    130
+   ],
+   "flags": {},
+   "order": 24,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "images",
+     "type": "IMAGE",
+     "link": 32
     },
     {
      "name": "audio",
      "type": "AUDIO",
-     "link": 32
+     "link": null
     }
    ],
    "outputs": [
@@ -1018,10 +1061,54 @@
     "sRGB",
     "auto",
     "none"
-   ]
+   ],
+   "title": "Shot video"
   },
   {
-   "id": 25,
+   "id": 26,
+   "type": "ConcatenateVideo",
+   "pos": [
+    620,
+    -70
+   ],
+   "size": [
+    420,
+    110
+   ],
+   "flags": {},
+   "order": 25,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "videos.video0",
+     "type": "VIDEO",
+     "link": 33
+    },
+    {
+     "name": "complete_audio",
+     "type": "AUDIO",
+     "link": 34
+    }
+   ],
+   "outputs": [
+    {
+     "name": "VIDEO",
+     "type": "VIDEO",
+     "links": [
+      35
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "ConcatenateVideo"
+   },
+   "widgets_values": [
+    "auto"
+   ],
+   "title": "Join the shots"
+  },
+  {
+   "id": 27,
    "type": "SaveVideo",
    "pos": [
     620,
@@ -1032,13 +1119,13 @@
     330
    ],
    "flags": {},
-   "order": 24,
+   "order": 26,
    "mode": 0,
    "inputs": [
     {
      "name": "video",
      "type": "VIDEO",
-     "link": 33
+     "link": 35
     }
    ],
    "outputs": [],
@@ -1288,14 +1375,6 @@
   ],
   [
    30,
-   8,
-   6,
-   23,
-   2,
-   "SYNTAX_TIMELINE"
-  ],
-  [
-   31,
    23,
    0,
    24,
@@ -1303,18 +1382,42 @@
    "IMAGE"
   ],
   [
+   31,
+   8,
+   6,
+   24,
+   1,
+   "SYNTAX_STRIP"
+  ],
+  [
    32,
+   24,
+   0,
+   25,
+   0,
+   "IMAGE"
+  ],
+  [
+   33,
+   25,
+   0,
+   26,
+   0,
+   "VIDEO"
+  ],
+  [
+   34,
    8,
    4,
-   24,
+   26,
    1,
    "AUDIO"
   ],
   [
-   33,
-   24,
+   35,
+   26,
    0,
-   25,
+   27,
    0,
    "VIDEO"
   ]
@@ -1353,7 +1456,7 @@
     100,
     -110,
     480,
-    1180
+    1520
    ],
    "color": "#3a7a4f",
    "font_size": 24,

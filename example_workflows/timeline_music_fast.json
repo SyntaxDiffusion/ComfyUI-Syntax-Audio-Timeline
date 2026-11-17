@@ -1,8 +1,8 @@
 {
- "id": "7e1a0c00-0000-4000-8000-380173872719",
+ "id": "7e1a0c00-0000-4000-8000-837025501945",
  "revision": 0,
- "last_node_id": 25,
- "last_link_id": 32,
+ "last_node_id": 27,
+ "last_link_id": 34,
  "nodes": [
   {
    "id": 1,
@@ -24,7 +24,7 @@
     "Node name for S&R": "MarkdownNote"
    },
    "widgets_values": [
-    "## Music video\n\nOne shot per image, cut on the downbeats of your track. Each shot is guided by the **drums** of its part of the song, so the action lands on the hits.\n\n- **Track**: your song. **Guide**: its drums stem (Audio Separation -> Drums, or a stem file). Without a guide the full mix is used, which follows the music more loosely.\n- **start_at**: roughly where the first shot starts; it snaps to the next downbeat. **bpm** 0 finds the tempo, **bars_per_shot** 0 gives ~5.5 s shots.\n- Add or remove images: one shot each.\n\n**This version: fast draft.** The ref2v 4-step turbo LoRA, 8 steps, CFG 1: quick, but follows the audio loosely.\n\nNodes: Syntax Timeline and Syntax Join Shots; everything else is core."
+    "## Music video\n\nOne shot per image, cut on the downbeats of your track. Each shot is guided by the **drums** of its part of the song, so the action lands on the hits.\n\n- **Track**: your song. **Guide**: its drums stem (Audio Separation -> Drums, or a stem file). Without a guide the full mix is used, which follows the music more loosely.\n- **start_at**: roughly where the first shot starts; it snaps to the next downbeat. **bpm** 0 finds the tempo, **bars_per_shot** 0 gives ~5.5 s shots.\n- Add or remove images: one shot each.\n\n**This version: fast draft.** The ref2v 4-step turbo LoRA, 8 steps, CFG 1: quick, but follows the audio loosely.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
    ]
   },
   {
@@ -326,7 +326,7 @@
      "name": "soundtrack",
      "type": "AUDIO",
      "links": [
-      31
+      33
      ]
     },
     {
@@ -337,11 +337,12 @@
      ]
     },
     {
-     "name": "timeline",
-     "type": "SYNTAX_TIMELINE",
+     "name": "strip",
+     "type": "SYNTAX_STRIP",
      "links": [
-      29
-     ]
+      30
+     ],
+     "shape": 6
     }
    ],
    "properties": {
@@ -354,7 +355,6 @@
     0,
     10.0,
     "thump",
-    true,
     ""
    ]
   },
@@ -925,33 +925,31 @@
   },
   {
    "id": 23,
-   "type": "SyntaxJoinShots",
+   "type": "ImageFromBatch",
    "pos": [
-    620,
-    -70
+    120,
+    1060
    ],
    "size": [
-    420,
-    80
+    440,
+    82
    ],
    "flags": {},
    "order": 22,
    "mode": 0,
    "inputs": [
     {
-     "name": "images",
+     "name": "image",
      "type": "IMAGE",
      "link": 27
     },
     {
-     "name": "frames",
+     "name": "length",
      "type": "INT",
-     "link": 28
-    },
-    {
-     "name": "timeline",
-     "type": "SYNTAX_TIMELINE",
-     "link": 29
+     "link": 28,
+     "widget": {
+      "name": "length"
+     }
     }
    ],
    "outputs": [
@@ -959,25 +957,29 @@
      "name": "IMAGE",
      "type": "IMAGE",
      "links": [
-      30
+      29
      ]
     }
    ],
    "properties": {
-    "Node name for S&R": "SyntaxJoinShots"
+    "Node name for S&R": "ImageFromBatch"
    },
-   "widgets_values": []
+   "widgets_values": [
+    0,
+    141
+   ],
+   "title": "Trim to the shot"
   },
   {
    "id": 24,
-   "type": "CreateVideo",
+   "type": "SyntaxPreviewStrip",
    "pos": [
-    620,
-    40
+    120,
+    1170
    ],
    "size": [
-    420,
-    130
+    440,
+    60
    ],
    "flags": {},
    "order": 23,
@@ -986,12 +988,53 @@
     {
      "name": "images",
      "type": "IMAGE",
+     "link": 29
+    },
+    {
+     "name": "strip",
+     "type": "SYNTAX_STRIP",
      "link": 30
+    }
+   ],
+   "outputs": [
+    {
+     "name": "IMAGE",
+     "type": "IMAGE",
+     "links": [
+      31
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "SyntaxPreviewStrip"
+   },
+   "widgets_values": [],
+   "title": "Sync strip (delete to hide)"
+  },
+  {
+   "id": 25,
+   "type": "CreateVideo",
+   "pos": [
+    120,
+    1260
+   ],
+   "size": [
+    440,
+    130
+   ],
+   "flags": {},
+   "order": 24,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "images",
+     "type": "IMAGE",
+     "link": 31
     },
     {
      "name": "audio",
      "type": "AUDIO",
-     "link": 31
+     "link": null
     }
    ],
    "outputs": [
@@ -1012,10 +1055,54 @@
     "sRGB",
     "auto",
     "none"
-   ]
+   ],
+   "title": "Shot video"
   },
   {
-   "id": 25,
+   "id": 26,
+   "type": "ConcatenateVideo",
+   "pos": [
+    620,
+    -70
+   ],
+   "size": [
+    420,
+    110
+   ],
+   "flags": {},
+   "order": 25,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "videos.video0",
+     "type": "VIDEO",
+     "link": 32
+    },
+    {
+     "name": "complete_audio",
+     "type": "AUDIO",
+     "link": 33
+    }
+   ],
+   "outputs": [
+    {
+     "name": "VIDEO",
+     "type": "VIDEO",
+     "links": [
+      34
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "ConcatenateVideo"
+   },
+   "widgets_values": [
+    "auto"
+   ],
+   "title": "Join the shots"
+  },
+  {
+   "id": 27,
    "type": "SaveVideo",
    "pos": [
     620,
@@ -1026,13 +1113,13 @@
     330
    ],
    "flags": {},
-   "order": 24,
+   "order": 26,
    "mode": 0,
    "inputs": [
     {
      "name": "video",
      "type": "VIDEO",
-     "link": 32
+     "link": 34
     }
    ],
    "outputs": [],
@@ -1274,14 +1361,6 @@
   ],
   [
    29,
-   8,
-   6,
-   23,
-   2,
-   "SYNTAX_TIMELINE"
-  ],
-  [
-   30,
    23,
    0,
    24,
@@ -1289,18 +1368,42 @@
    "IMAGE"
   ],
   [
+   30,
+   8,
+   6,
+   24,
+   1,
+   "SYNTAX_STRIP"
+  ],
+  [
    31,
+   24,
+   0,
+   25,
+   0,
+   "IMAGE"
+  ],
+  [
+   32,
+   25,
+   0,
+   26,
+   0,
+   "VIDEO"
+  ],
+  [
+   33,
    8,
    4,
-   24,
+   26,
    1,
    "AUDIO"
   ],
   [
-   32,
-   24,
+   34,
+   26,
    0,
-   25,
+   27,
    0,
    "VIDEO"
   ]
@@ -1339,7 +1442,7 @@
     100,
     -110,
     480,
-    1180
+    1520
    ],
    "color": "#3a7a4f",
    "font_size": 24,

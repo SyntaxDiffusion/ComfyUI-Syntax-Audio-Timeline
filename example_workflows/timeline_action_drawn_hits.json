@@ -1,8 +1,8 @@
 {
- "id": "7e1a0c00-0000-4000-8000-085919202112",
+ "id": "7e1a0c00-0000-4000-8000-188027711983",
  "revision": 0,
- "last_node_id": 24,
- "last_link_id": 32,
+ "last_node_id": 26,
+ "last_link_id": 34,
  "nodes": [
   {
    "id": 1,
@@ -24,7 +24,7 @@
     "Node name for S&R": "MarkdownNote"
    },
    "widgets_values": [
-    "## Action you place by hand\n\nNo audio needed: mark where the action should land. Each red marker on the timeline becomes a hit sound in that shot's guide, so the action lands there.\n\n- **Timeline**: double-click to add a hit, drag to move it, right-click to delete it. **duration** sets the length.\n- **hit_sound**: thump (punches, blows), crash (cymbals), boom (thunder, explosions).\n- The finished video carries the hit sounds; swap in your own mix afterwards.\n\n**This version: hits that land.** Full model, 30 steps, CFG 5 with the negative zeroed before the guide, so the picture is pushed onto the audio.\n\nNodes: Syntax Timeline and Syntax Join Shots; everything else is core."
+    "## Action you place by hand\n\nNo audio needed: mark where the action should land. Each red marker on the timeline becomes a hit sound in that shot's guide, so the action lands there.\n\n- **Timeline**: double-click to add a hit, drag to move it, right-click to delete it. **duration** sets the length.\n- **hit_sound**: thump (punches, blows), crash (cymbals), boom (thunder, explosions).\n- The finished video carries the hit sounds; swap in your own mix afterwards.\n\n**This version: hits that land.** Full model, 30 steps, CFG 5 with the negative zeroed before the guide, so the picture is pushed onto the audio.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
    ]
   },
   {
@@ -294,7 +294,7 @@
      "name": "soundtrack",
      "type": "AUDIO",
      "links": [
-      31
+      33
      ]
     },
     {
@@ -305,11 +305,12 @@
      ]
     },
     {
-     "name": "timeline",
-     "type": "SYNTAX_TIMELINE",
+     "name": "strip",
+     "type": "SYNTAX_STRIP",
      "links": [
-      29
-     ]
+      30
+     ],
+     "shape": 6
     }
    ],
    "properties": {
@@ -322,7 +323,6 @@
     0,
     12.0,
     "thump",
-    true,
     "{\"hits\": [1.6, 3.4, 6.2, 8.0, 10.5]}"
    ]
   },
@@ -899,33 +899,31 @@
   },
   {
    "id": 22,
-   "type": "SyntaxJoinShots",
+   "type": "ImageFromBatch",
    "pos": [
-    620,
-    -70
+    120,
+    1060
    ],
    "size": [
-    420,
-    80
+    440,
+    82
    ],
    "flags": {},
    "order": 21,
    "mode": 0,
    "inputs": [
     {
-     "name": "images",
+     "name": "image",
      "type": "IMAGE",
      "link": 27
     },
     {
-     "name": "frames",
+     "name": "length",
      "type": "INT",
-     "link": 28
-    },
-    {
-     "name": "timeline",
-     "type": "SYNTAX_TIMELINE",
-     "link": 29
+     "link": 28,
+     "widget": {
+      "name": "length"
+     }
     }
    ],
    "outputs": [
@@ -933,25 +931,29 @@
      "name": "IMAGE",
      "type": "IMAGE",
      "links": [
-      30
+      29
      ]
     }
    ],
    "properties": {
-    "Node name for S&R": "SyntaxJoinShots"
+    "Node name for S&R": "ImageFromBatch"
    },
-   "widgets_values": []
+   "widgets_values": [
+    0,
+    141
+   ],
+   "title": "Trim to the shot"
   },
   {
    "id": 23,
-   "type": "CreateVideo",
+   "type": "SyntaxPreviewStrip",
    "pos": [
-    620,
-    40
+    120,
+    1170
    ],
    "size": [
-    420,
-    130
+    440,
+    60
    ],
    "flags": {},
    "order": 22,
@@ -960,12 +962,53 @@
     {
      "name": "images",
      "type": "IMAGE",
+     "link": 29
+    },
+    {
+     "name": "strip",
+     "type": "SYNTAX_STRIP",
      "link": 30
+    }
+   ],
+   "outputs": [
+    {
+     "name": "IMAGE",
+     "type": "IMAGE",
+     "links": [
+      31
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "SyntaxPreviewStrip"
+   },
+   "widgets_values": [],
+   "title": "Sync strip (delete to hide)"
+  },
+  {
+   "id": 24,
+   "type": "CreateVideo",
+   "pos": [
+    120,
+    1260
+   ],
+   "size": [
+    440,
+    130
+   ],
+   "flags": {},
+   "order": 23,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "images",
+     "type": "IMAGE",
+     "link": 31
     },
     {
      "name": "audio",
      "type": "AUDIO",
-     "link": 31
+     "link": null
     }
    ],
    "outputs": [
@@ -986,10 +1029,54 @@
     "sRGB",
     "auto",
     "none"
-   ]
+   ],
+   "title": "Shot video"
   },
   {
-   "id": 24,
+   "id": 25,
+   "type": "ConcatenateVideo",
+   "pos": [
+    620,
+    -70
+   ],
+   "size": [
+    420,
+    110
+   ],
+   "flags": {},
+   "order": 24,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "videos.video0",
+     "type": "VIDEO",
+     "link": 32
+    },
+    {
+     "name": "complete_audio",
+     "type": "AUDIO",
+     "link": 33
+    }
+   ],
+   "outputs": [
+    {
+     "name": "VIDEO",
+     "type": "VIDEO",
+     "links": [
+      34
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "ConcatenateVideo"
+   },
+   "widgets_values": [
+    "auto"
+   ],
+   "title": "Join the shots"
+  },
+  {
+   "id": 26,
    "type": "SaveVideo",
    "pos": [
     620,
@@ -1000,13 +1087,13 @@
     330
    ],
    "flags": {},
-   "order": 23,
+   "order": 25,
    "mode": 0,
    "inputs": [
     {
      "name": "video",
      "type": "VIDEO",
-     "link": 32
+     "link": 34
     }
    ],
    "outputs": [],
@@ -1248,14 +1335,6 @@
   ],
   [
    29,
-   7,
-   6,
-   22,
-   2,
-   "SYNTAX_TIMELINE"
-  ],
-  [
-   30,
    22,
    0,
    23,
@@ -1263,18 +1342,42 @@
    "IMAGE"
   ],
   [
+   30,
+   7,
+   6,
+   23,
+   1,
+   "SYNTAX_STRIP"
+  ],
+  [
    31,
+   23,
+   0,
+   24,
+   0,
+   "IMAGE"
+  ],
+  [
+   32,
+   24,
+   0,
+   25,
+   0,
+   "VIDEO"
+  ],
+  [
+   33,
    7,
    4,
-   23,
+   25,
    1,
    "AUDIO"
   ],
   [
-   32,
-   23,
+   34,
+   25,
    0,
-   24,
+   26,
    0,
    "VIDEO"
   ]
@@ -1313,7 +1416,7 @@
     100,
     -110,
     480,
-    1180
+    1520
    ],
    "color": "#3a7a4f",
    "font_size": 24,
