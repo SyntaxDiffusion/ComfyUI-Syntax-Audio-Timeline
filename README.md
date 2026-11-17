@@ -44,6 +44,8 @@ Two nodes. Everything else in the workflows is core ComfyUI.
 
 The editor on the node shows the shots right away, and the track's waveform (at once from a Load Audio wired straight in, otherwise after *Analyse*). Hover it for hints; **?** lists every control.
 
+![The Syntax Timeline node in music mode: kicks lane, waveform and three shots](docs/editor.png)
+
 - **Range**: drag the yellow handles to set where the video starts and ends.
 - **Shots**: drag a white cut to move it, double-click a shot to split it, right-click a cut to merge the two shots. *One shot* makes a single shot over the whole range; *By images* goes back to one shot per image. More shots than images reuse the images in order, so one image can fill 30 s as one shot or several.
 - **Kicks** (music, the top lane): the kick drum hits the last run found.
