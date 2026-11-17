@@ -8,6 +8,8 @@ Two nodes. Everything else in the workflows is core ComfyUI.
 | --- | --- | --- |
 | ![music](docs/music.gif) | ![dialogue](docs/dialogue.gif) | ![action](docs/action.gif) |
 
+The strip along the bottom is *Syntax Preview Strip*: the guide's loudness in blue, the cuts in white, the kicks in red and a yellow playhead, so you can see the action land on the sound without audio.
+
 ## Quick start
 
 1. **Install**: clone this repo into `ComfyUI/custom_nodes/` and restart ComfyUI. No extra Python packages.
