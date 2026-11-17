@@ -1,8 +1,8 @@
 {
   "id": "7e1a0c00-0000-4000-8000-260954875564",
   "revision": 0,
-  "last_node_id": 33,
-  "last_link_id": 46,
+  "last_node_id": 34,
+  "last_link_id": 60,
   "nodes": [
     {
       "id": 1,
@@ -24,10 +24,10 @@
         "Node name for S&R": "MarkdownNote"
       },
       "widgets_values": [
-        "## Base: music, dialogue or action\n\nOne shot per image over your track, in order. Load a track and your images, pick **mode** and press Run.\n\n- **mode**: *music* cuts whole bars from the downbeat after *start_at*, guided by the kick of **drums**; *dialogue* cuts in the pauses, guided by **voice**; *action* cuts between hits, guided by the track.\n- **Audio Separation** feeds **drums** and **voice** from your track, so switching mode is one click.\n- **duration**: how long the video runs from *start_at*. One image and 30 s gives one 30 s shot.\n- **Context windows**: each shot is sampled in overlapping ~5 s windows, so shots can run 30 s and more and keep their look. Bypass the node for the tightest sync on short shots.\n- **Anchor** (optional): to hold a hard style or a character across the cuts, connect a character or style sheet to *Reference to Video*'s second image slot and add *drawn in the art style of <Picture 2>* to the prompt. Not a full scene: H3 may animate the anchor instead of the shot's image.\n- **Timeline**: drag the yellow handles to set the range, double-click a shot to split it, right-click a cut to merge, *One shot* for a single long shot. Hover it for hints, **?** lists every control, **Analyse** shows the exact cuts without rendering.\n\n- **Trim Audio Duration**: the part of the track to use (start and length in seconds); *start_at* and *duration* count from the start of the trim. The Timeline and Audio Separation both take the trimmed audio, so the kicks line up.\n\n**This version: fast.** The pika LoRA, 8 steps, CFG 1. For hits that land harder, bypass the LoRA and use 30 steps and CFG 5: the negative is already zeroed before the guide.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
+        "## Base: music, dialogue or action\n\nOne shot per image over your track, in order. Load a track and your images, pick **mode** and press Run.\n\n- **mode**: *music* cuts whole bars from the downbeat after *start_at*, guided by the drums (*music_guide*: *drums*, the whole drums stem, or *kicks*, a thump on each kick); *dialogue* cuts in the pauses, guided by **voice**; *action* cuts between hits, guided by the track.\n- **Audio Separation** feeds **drums** and **voice** from your track, so switching mode is one click.\n- **duration**: how long the video runs from *start_at*. One image and 30 s gives one 30 s shot.\n- **Context windows**: each shot is sampled in overlapping ~5 s windows, so shots can run 30 s and more and keep their look. Bypass the node for the tightest sync on short shots.\n- **Anchor** (optional): to hold a hard style or a character across the cuts, connect a character or style sheet to *Reference to Video*'s second image slot and add *drawn in the art style of <Picture 2>* to the prompt. Not a full scene: H3 may animate the anchor instead of the shot's image.\n- **Timeline**: drag the yellow handles to set the range, double-click a shot to split it, right-click a cut to merge, *One shot* for a single long shot. Hover it for hints, **?** lists every control, **Analyse** shows the exact cuts without rendering.\n\n- **Trim Audio Duration**: the part of the track to use (start and length in seconds); *start_at* and *duration* count from the start of the trim. The Timeline's track and Audio Separation both take the trimmed audio, so the kicks line up.\n\n**This version: fast.** The pika LoRA, 8 steps, CFG 1. For hits that land harder, bypass the LoRA and use 30 steps and CFG 5: the negative is already zeroed before the guide.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
       ],
       "widgets_values_named": {
-        "text": "## Base: music, dialogue or action\n\nOne shot per image over your track, in order. Load a track and your images, pick **mode** and press Run.\n\n- **mode**: *music* cuts whole bars from the downbeat after *start_at*, guided by the kick of **drums**; *dialogue* cuts in the pauses, guided by **voice**; *action* cuts between hits, guided by the track.\n- **Audio Separation** feeds **drums** and **voice** from your track, so switching mode is one click.\n- **duration**: how long the video runs from *start_at*. One image and 30 s gives one 30 s shot.\n- **Context windows**: each shot is sampled in overlapping ~5 s windows, so shots can run 30 s and more and keep their look. Bypass the node for the tightest sync on short shots.\n- **Anchor** (optional): to hold a hard style or a character across the cuts, connect a character or style sheet to *Reference to Video*'s second image slot and add *drawn in the art style of <Picture 2>* to the prompt. Not a full scene: H3 may animate the anchor instead of the shot's image.\n- **Timeline**: drag the yellow handles to set the range, double-click a shot to split it, right-click a cut to merge, *One shot* for a single long shot. Hover it for hints, **?** lists every control, **Analyse** shows the exact cuts without rendering.\n\n- **Trim Audio Duration**: the part of the track to use (start and length in seconds); *start_at* and *duration* count from the start of the trim. The Timeline and Audio Separation both take the trimmed audio, so the kicks line up.\n\n**This version: fast.** The pika LoRA, 8 steps, CFG 1. For hits that land harder, bypass the LoRA and use 30 steps and CFG 5: the negative is already zeroed before the guide.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
+        "text": "## Base: music, dialogue or action\n\nOne shot per image over your track, in order. Load a track and your images, pick **mode** and press Run.\n\n- **mode**: *music* cuts whole bars from the downbeat after *start_at*, guided by the kick of **drums**; *dialogue* cuts in the pauses, guided by **voice**; *action* cuts between hits, guided by the track.\n- **Audio Separation** feeds **drums** and **voice** from your track, so switching mode is one click.\n- **duration**: how long the video runs from *start_at*. One image and 30 s gives one 30 s shot.\n- **Context windows**: each shot is sampled in overlapping ~5 s windows, so shots can run 30 s and more and keep their look. Bypass the node for the tightest sync on short shots.\n- **Anchor** (optional): to hold a hard style or a character across the cuts, connect a character or style sheet to *Reference to Video*'s second image slot and add *drawn in the art style of <Picture 2>* to the prompt. Not a full scene: H3 may animate the anchor instead of the shot's image.\n- **Timeline**: drag the yellow handles to set the range, double-click a shot to split it, right-click a cut to merge, *One shot* for a single long shot. Hover it for hints, **?** lists every control, **Analyse** shows the exact cuts without rendering.\n\n**This version: hits that land.** Full model, 30 steps, CFG 5 with the negative zeroed before the guide, so the picture is pushed onto the audio.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
       },
       "color": "#432",
       "bgcolor": "#653"
@@ -61,11 +61,11 @@
         "Node name for S&R": "LoadAudio"
       },
       "widgets_values": [
-        "Apashe - Catch Me (Official Video).mp3",
+        "ero808 - SHAKE A LIL’ SOMETHIN’.mp3",
         ""
       ],
       "widgets_values_named": {
-        "audio": "Apashe - Catch Me (Official Video).mp3",
+        "audio": "ero808 - SHAKE A LIL’ SOMETHIN’.mp3",
         "upload": ""
       }
     },
@@ -98,10 +98,10 @@
         "Node name for S&R": "PrimitiveStringMultiline"
       },
       "widgets_values": [
-        "On every beat and bass hit, the characters dance with sharp, powerful, rhythmic movements, snapping their heads, shoulders, arms and bodies perfectly to the music. Neon waveforms pulse and ripple to the beat, speaker cones vibrate with heavy bass, equalizer bars bounce rapidly, analog VU meters swing, and retro stereo lights flash in sync. Intense pink, purple and cyan rave lighting strobes rhythmically. High-energy anime dance animation, fluid motion with sharp accents, dynamic hair and clothing movement. Static camera, fixed composition, no camera movement, no cuts, no text. 16:9."
+        "On every beat hit, the characters dance with sharp, powerful, rhythmic movements, snapping their heads, shoulders, arms and bodies perfectly to the music. Neon waveforms pulse and ripple to the beat, speaker cones vibrate with heavy bass, equalizer bars bounce rapidly, analog VU meters swing, and retro stereo lights flash in sync. Intense pink, purple and cyan rave lighting strobes rhythmically. High-energy anime dance animation, fluid motion with sharp accents, dynamic hair and clothing movement. Static camera, fixed composition, no camera movement, no cuts, no text. 16:9."
       ],
       "widgets_values_named": {
-        "value": "On every beat and bass hit, the characters dance with sharp, powerful, rhythmic movements, snapping their heads, shoulders, arms and bodies perfectly to the music. Neon waveforms pulse and ripple to the beat, speaker cones vibrate with heavy bass, equalizer bars bounce rapidly, analog VU meters swing, and retro stereo lights flash in sync. Intense pink, purple and cyan rave lighting strobes rhythmically. High-energy anime dance animation, fluid motion with sharp accents, dynamic hair and clothing movement. Static camera, fixed composition, no camera movement, no cuts, no text. 16:9."
+        "value": "On every beat hit, the characters dance with sharp, powerful, rhythmic movements, snapping their heads, shoulders, arms and bodies perfectly to the music. Neon waveforms pulse and ripple to the beat, speaker cones vibrate with heavy bass, equalizer bars bounce rapidly, analog VU meters swing, and retro stereo lights flash in sync. Intense pink, purple and cyan rave lighting strobes rhythmically. High-energy anime dance animation, fluid motion with sharp accents, dynamic hair and clothing movement. Static camera, fixed composition, no camera movement, no cuts, no text. 16:9."
       }
     },
     {
@@ -124,7 +124,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            5
+            48
           ]
         },
         {
@@ -166,7 +166,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            6
+            49
           ]
         },
         {
@@ -208,7 +208,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            7
+            50
           ]
         },
         {
@@ -250,7 +250,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            8
+            51
           ]
         },
         {
@@ -270,153 +270,6 @@
       "widgets_values_named": {
         "image": "ChatGPT Image Nov 17, 2026, 04_52_48 PM-1.png",
         "upload": "image"
-      }
-    },
-    {
-      "id": 9,
-      "type": "SyntaxTimeline",
-      "pos": [
-        -1000,
-        -30
-      ],
-      "size": [
-        600,
-        622
-      ],
-      "flags": {},
-      "order": 18,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "images.image0",
-          "type": "IMAGE",
-          "link": 5
-        },
-        {
-          "name": "images.image1",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": 6
-        },
-        {
-          "name": "images.image2",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": 7
-        },
-        {
-          "name": "images.image3",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": 8
-        },
-        {
-          "name": "images.image4",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "images.image5",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "track",
-          "shape": 7,
-          "type": "AUDIO",
-          "link": 46
-        },
-        {
-          "name": "drums",
-          "shape": 7,
-          "type": "AUDIO",
-          "link": 3
-        },
-        {
-          "name": "voice",
-          "shape": 7,
-          "type": "AUDIO",
-          "link": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "image",
-          "shape": 6,
-          "type": "IMAGE",
-          "links": [
-            13
-          ]
-        },
-        {
-          "name": "guide_audio",
-          "shape": 6,
-          "type": "AUDIO",
-          "links": [
-            19
-          ]
-        },
-        {
-          "name": "length",
-          "shape": 6,
-          "type": "INT",
-          "links": [
-            15
-          ]
-        },
-        {
-          "name": "frames",
-          "shape": 6,
-          "type": "INT",
-          "links": [
-            33
-          ]
-        },
-        {
-          "name": "soundtrack",
-          "type": "AUDIO",
-          "links": [
-            38
-          ]
-        },
-        {
-          "name": "info",
-          "type": "STRING",
-          "links": [
-            9
-          ]
-        },
-        {
-          "name": "strip",
-          "shape": 6,
-          "type": "SYNTAX_STRIP",
-          "links": [
-            35
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "SyntaxTimeline"
-      },
-      "widgets_values": [
-        "music",
-        22.81,
-        41.249,
-        0,
-        "thump",
-        "",
-        ""
-      ],
-      "widgets_values_named": {
-        "mode": "music",
-        "start_at": 22.81,
-        "duration": 41.249,
-        "bpm": 0,
-        "hit_sound": "thump",
-        "edits": "",
-        "timeline_editor": ""
       }
     },
     {
@@ -450,7 +303,7 @@
           "name": "Drums",
           "type": "AUDIO",
           "links": [
-            3
+            53
           ]
         },
         {
@@ -497,7 +350,7 @@
         {
           "name": "source",
           "type": "*",
-          "link": 9
+          "link": 59
         }
       ],
       "outputs": [
@@ -542,11 +395,11 @@
         "Node name for S&R": "UNETLoader"
       },
       "widgets_values": [
-        "minimax_h3_fl2va_pruned_fp8_scaled.safetensors",
+        "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
         "default"
       ],
       "widgets_values_named": {
-        "unet_name": "minimax_h3_fl2va_pruned_fp8_scaled.safetensors",
+        "unet_name": "minimax_h3_ref2va_pruned_int8_convrot.safetensors",
         "weight_dtype": "default"
       }
     },
@@ -563,7 +416,7 @@
       ],
       "flags": {},
       "order": 17,
-      "mode": 0,
+      "mode": 4,
       "inputs": [
         {
           "name": "model",
@@ -742,7 +595,7 @@
           "name": "ref_images.ref_image_0",
           "shape": 7,
           "type": "IMAGE",
-          "link": 13
+          "link": 54
         },
         {
           "name": "ref_images.ref_image_1",
@@ -788,7 +641,7 @@
           "widget": {
             "name": "length"
           },
-          "link": 15
+          "link": 56
         }
       ],
       "outputs": [
@@ -874,7 +727,7 @@
           "name": "audio",
           "shape": 7,
           "type": "AUDIO",
-          "link": 19
+          "link": 55
         }
       ],
       "outputs": [
@@ -1220,7 +1073,7 @@
           "widget": {
             "name": "length"
           },
-          "link": 33
+          "link": 57
         }
       ],
       "outputs": [
@@ -1268,7 +1121,7 @@
         {
           "name": "strip",
           "type": "SYNTAX_STRIP",
-          "link": 35
+          "link": 60
         }
       ],
       "outputs": [
@@ -1370,7 +1223,7 @@
           "name": "complete_audio",
           "shape": 7,
           "type": "AUDIO",
-          "link": 38
+          "link": 58
         }
       ],
       "outputs": [
@@ -1441,12 +1294,12 @@
       "id": 31,
       "type": "LoraLoaderModelOnly",
       "pos": [
-        -232.70734849089456,
-        -216.78523846977524
+        -230,
+        -220
       ],
       "size": [
         270,
-        82
+        90
       ],
       "flags": {},
       "order": 14,
@@ -1471,11 +1324,11 @@
         "Node name for S&R": "LoraLoaderModelOnly"
       },
       "widgets_values": [
-        "pika_h3_flex_fl2va_v1_bf16.safetensors",
+        "pika_h3_flex_ref2va_v1_bf16.safetensors",
         1
       ],
       "widgets_values_named": {
-        "lora_name": "pika_h3_flex_fl2va_v1_bf16.safetensors",
+        "lora_name": "pika_h3_flex_ref2va_v1_bf16.safetensors",
         "strength_model": 1
       }
     },
@@ -1488,7 +1341,7 @@
       ],
       "size": [
         270,
-        82
+        90
       ],
       "flags": {},
       "order": 13,
@@ -1514,12 +1367,12 @@
         "Node name for S&R": "TrimAudioDuration"
       },
       "widgets_values": [
-        90,
-        120
+        60,
+        90
       ],
       "widgets_values_named": {
-        "start_index": 90,
-        "duration": 120
+        "start_index": 60,
+        "duration": 90
       }
     },
     {
@@ -1531,7 +1384,7 @@
       ],
       "size": [
         270,
-        88
+        90
       ],
       "flags": {},
       "order": 16,
@@ -1548,7 +1401,7 @@
           "name": "audio",
           "type": "AUDIO",
           "links": [
-            46
+            52
           ]
         }
       ],
@@ -1557,17 +1410,152 @@
       },
       "widgets_values": [],
       "widgets_values_named": {}
+    },
+    {
+      "id": 34,
+      "type": "SyntaxTimeline",
+      "pos": [
+        -1000,
+        -30
+      ],
+      "size": [
+        600,
+        626
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images.image0",
+          "type": "IMAGE",
+          "link": 48
+        },
+        {
+          "name": "images.image1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 49
+        },
+        {
+          "name": "images.image2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 50
+        },
+        {
+          "name": "images.image3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 51
+        },
+        {
+          "name": "images.image4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "track",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": 52
+        },
+        {
+          "name": "drums",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": 53
+        },
+        {
+          "name": "voice",
+          "shape": 7,
+          "type": "AUDIO",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "shape": 6,
+          "type": "IMAGE",
+          "links": [
+            54
+          ]
+        },
+        {
+          "name": "guide_audio",
+          "shape": 6,
+          "type": "AUDIO",
+          "links": [
+            55
+          ]
+        },
+        {
+          "name": "length",
+          "shape": 6,
+          "type": "INT",
+          "links": [
+            56
+          ]
+        },
+        {
+          "name": "frames",
+          "shape": 6,
+          "type": "INT",
+          "links": [
+            57
+          ]
+        },
+        {
+          "name": "soundtrack",
+          "type": "AUDIO",
+          "links": [
+            58
+          ]
+        },
+        {
+          "name": "info",
+          "type": "STRING",
+          "links": [
+            59
+          ]
+        },
+        {
+          "name": "strip",
+          "shape": 6,
+          "type": "SYNTAX_STRIP",
+          "links": [
+            60
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "SyntaxTimeline"
+      },
+      "widgets_values": [
+        "music",
+        0,
+        0,
+        0,
+        "thump",
+        "",
+        "kicks",
+        ""
+      ],
+      "widgets_values_named": {
+        "mode": "music",
+        "start_at": 0,
+        "duration": 0,
+        "bpm": 0,
+        "hit_sound": "thump",
+        "edits": "",
+        "music_guide": "kicks",
+        "timeline_editor": ""
+      }
     }
   ],
   "links": [
-    [
-      9,
-      9,
-      5,
-      11,
-      0,
-      "STRING"
-    ],
     [
       16,
       17,
@@ -1689,116 +1677,12 @@
       "IMAGE"
     ],
     [
-      35,
-      9,
-      6,
-      27,
-      1,
-      "SYNTAX_STRIP"
-    ],
-    [
       36,
       27,
       0,
       28,
       0,
       "IMAGE"
-    ],
-    [
-      37,
-      28,
-      0,
-      29,
-      0,
-      "VIDEO"
-    ],
-    [
-      39,
-      29,
-      0,
-      30,
-      0,
-      "VIDEO"
-    ],
-    [
-      5,
-      4,
-      0,
-      9,
-      0,
-      "IMAGE"
-    ],
-    [
-      6,
-      5,
-      0,
-      9,
-      1,
-      "IMAGE"
-    ],
-    [
-      7,
-      6,
-      0,
-      9,
-      2,
-      "IMAGE"
-    ],
-    [
-      8,
-      7,
-      0,
-      9,
-      3,
-      "IMAGE"
-    ],
-    [
-      3,
-      10,
-      1,
-      9,
-      7,
-      "AUDIO"
-    ],
-    [
-      11,
-      14,
-      0,
-      17,
-      0,
-      "CLIP"
-    ],
-    [
-      12,
-      15,
-      0,
-      17,
-      1,
-      "VAE"
-    ],
-    [
-      13,
-      9,
-      0,
-      17,
-      3,
-      "IMAGE"
-    ],
-    [
-      14,
-      3,
-      0,
-      17,
-      9,
-      "STRING"
-    ],
-    [
-      15,
-      9,
-      2,
-      17,
-      10,
-      "INT"
     ],
     [
       17,
@@ -1815,30 +1699,6 @@
       18,
       1,
       "LATENT"
-    ],
-    [
-      19,
-      9,
-      1,
-      18,
-      5,
-      "AUDIO"
-    ],
-    [
-      33,
-      9,
-      3,
-      26,
-      1,
-      "INT"
-    ],
-    [
-      38,
-      9,
-      4,
-      29,
-      2,
-      "AUDIO"
     ],
     [
       40,
@@ -1881,12 +1741,148 @@
       "AUDIO"
     ],
     [
-      46,
+      11,
+      14,
+      0,
+      17,
+      0,
+      "CLIP"
+    ],
+    [
+      12,
+      15,
+      0,
+      17,
+      1,
+      "VAE"
+    ],
+    [
+      37,
+      28,
+      0,
+      29,
+      0,
+      "VIDEO"
+    ],
+    [
+      39,
+      29,
+      0,
+      30,
+      0,
+      "VIDEO"
+    ],
+    [
+      14,
+      3,
+      0,
+      17,
+      9,
+      "STRING"
+    ],
+    [
+      48,
+      4,
+      0,
+      34,
+      0,
+      "IMAGE"
+    ],
+    [
+      49,
+      5,
+      0,
+      34,
+      1,
+      "IMAGE"
+    ],
+    [
+      50,
+      6,
+      0,
+      34,
+      2,
+      "IMAGE"
+    ],
+    [
+      51,
+      7,
+      0,
+      34,
+      3,
+      "IMAGE"
+    ],
+    [
+      52,
       33,
       0,
-      9,
+      34,
+      5,
+      "AUDIO"
+    ],
+    [
+      53,
+      10,
+      1,
+      34,
       6,
       "AUDIO"
+    ],
+    [
+      54,
+      34,
+      0,
+      17,
+      3,
+      "IMAGE"
+    ],
+    [
+      55,
+      34,
+      1,
+      18,
+      5,
+      "AUDIO"
+    ],
+    [
+      56,
+      34,
+      2,
+      17,
+      10,
+      "INT"
+    ],
+    [
+      57,
+      34,
+      3,
+      26,
+      1,
+      "INT"
+    ],
+    [
+      58,
+      34,
+      4,
+      29,
+      2,
+      "AUDIO"
+    ],
+    [
+      59,
+      34,
+      5,
+      11,
+      0,
+      "STRING"
+    ],
+    [
+      60,
+      34,
+      6,
+      27,
+      1,
+      "SYNTAX_STRIP"
     ]
   ],
   "groups": [
@@ -1966,10 +1962,10 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.878460000000008,
+      "scale": 0.6600000000000075,
       "offset": [
-        1891.6893297722818,
-        75.06605470836536
+        2723.918992306242,
+        -110.48549881010922
       ]
     },
     "frontendVersion": "1.58.5",

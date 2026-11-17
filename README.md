@@ -18,10 +18,10 @@ The strip along the bottom is *Syntax Preview Strip*: the guide's loudness in bl
 
    | File | Folder |
    | --- | --- |
-   | `minimax_h3_fl2va_pruned_fp8_scaled.safetensors` | `models/diffusion_models` |
+   | `minimax_h3_ref2va_pruned_int8_convrot.safetensors` | `models/diffusion_models` |
    | `qwen3vl_32b_minimax_h3_int8_convrot.safetensors` (or `..._nvfp4_awq` on RTX 50-series) | `models/text_encoders` |
    | `minimax_h3_video_vae_fp16.safetensors`, `minimax_h3_audio_vae_fp32.safetensors` | `models/vae` |
-   | `pika_h3_flex_fl2va_v1_bf16.safetensors` | `models/loras` |
+   | `pika_h3_flex_ref2va_v1_bf16.safetensors` | `models/loras` |
 
 3. **Run**: drag `example_workflows/timeline_base.json` into ComfyUI, load your track and images, pick a *mode* and press Run. Its note explains what to change. It runs the pika LoRA at 8 steps and CFG 1.
 
