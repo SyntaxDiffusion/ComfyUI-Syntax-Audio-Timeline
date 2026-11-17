@@ -1,8 +1,8 @@
 {
  "id": "7e1a0c00-0000-4000-8000-845695452411",
  "revision": 0,
- "last_node_id": 30,
- "last_link_id": 39,
+ "last_node_id": 31,
+ "last_link_id": 40,
  "nodes": [
   {
    "id": 1,
@@ -24,7 +24,7 @@
     "Node name for S&R": "MarkdownNote"
    },
    "widgets_values": [
-    "## Base: music, dialogue or action\n\nOne shot per image over your track, in order. Load a track and your images, pick **mode** and press Run.\n\n- **mode**: *music* cuts whole bars from the downbeat after *start_at*, guided by the kick of **drums**; *dialogue* cuts in the pauses, guided by **voice**; *action* cuts between hits, guided by the track.\n- **Audio Separation** feeds **drums** and **voice** from your track, so switching mode is one click.\n- **duration**: how long the video runs from *start_at*. One image and 30 s gives one 30 s shot.\n- **Context windows**: each shot is sampled in overlapping ~5 s windows, so shots can run 30 s and more and keep their look. Bypass the node for the tightest sync on short shots.\n- **Anchor** (optional): to hold a hard style or a character across the cuts, connect a character or style sheet to *Reference to Video*'s second image slot and add *drawn in the art style of <Picture 2>* to the prompt. Not a full scene: H3 may animate the anchor instead of the shot's image.\n- **Timeline**: drag the yellow handles to set the range, double-click a shot to split it, right-click a cut to merge, *One shot* for a single long shot. Hover it for hints, **?** lists every control, **Analyse** shows the exact cuts without rendering.\n\n**This version: hits that land.** Full model, 30 steps, CFG 5 with the negative zeroed before the guide, so the picture is pushed onto the audio.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
+    "## Base: music, dialogue or action\n\nOne shot per image over your track, in order. Load a track and your images, pick **mode** and press Run.\n\n- **mode**: *music* cuts whole bars from the downbeat after *start_at*, guided by the kick of **drums**; *dialogue* cuts in the pauses, guided by **voice**; *action* cuts between hits, guided by the track.\n- **Audio Separation** feeds **drums** and **voice** from your track, so switching mode is one click.\n- **duration**: how long the video runs from *start_at*. One image and 30 s gives one 30 s shot.\n- **Context windows**: each shot is sampled in overlapping ~5 s windows, so shots can run 30 s and more and keep their look. Bypass the node for the tightest sync on short shots.\n- **Anchor** (optional): to hold a hard style or a character across the cuts, connect a character or style sheet to *Reference to Video*'s second image slot and add *drawn in the art style of <Picture 2>* to the prompt. Not a full scene: H3 may animate the anchor instead of the shot's image.\n- **Timeline**: drag the yellow handles to set the range, double-click a shot to split it, right-click a cut to merge, *One shot* for a single long shot. Hover it for hints, **?** lists every control, **Analyse** shows the exact cuts without rendering.\n\n**This version: fast.** The pika LoRA, 8 steps, CFG 1. For hits that land harder, bypass the LoRA and use 30 steps and CFG 5: the negative is already zeroed before the guide.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
    ]
   },
   {
@@ -521,7 +521,7 @@
    "type": "MiniMaxH3ContextWindows",
    "pos": [
     -320,
-    130
+    220
    ],
    "size": [
     380,
@@ -534,7 +534,7 @@
     {
      "name": "model",
      "type": "MODEL",
-     "link": 10
+     "link": 40
     }
    ],
    "outputs": [
@@ -868,7 +868,7 @@
     "Node name for S&R": "CFGGuider"
    },
    "widgets_values": [
-    5.0
+    1.0
    ]
   },
   {
@@ -969,7 +969,7 @@
    },
    "widgets_values": [
     "simple",
-    30,
+    8,
     1.0
    ]
   },
@@ -1277,10 +1277,48 @@
     "Node name for S&R": "SaveVideo"
    },
    "widgets_values": [
-    "timeline/base_hits",
+    "timeline/base",
     "auto",
     "auto",
     "auto"
+   ]
+  },
+  {
+   "id": 31,
+   "type": "LoraLoaderModelOnly",
+   "pos": [
+    -320,
+    40
+   ],
+   "size": [
+    380,
+    82
+   ],
+   "flags": {},
+   "order": 12,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "model",
+     "type": "MODEL",
+     "link": 10
+    }
+   ],
+   "outputs": [
+    {
+     "name": "MODEL",
+     "type": "MODEL",
+     "links": [
+      40
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "LoraLoaderModelOnly"
+   },
+   "widgets_values": [
+    "pika_h3_flex_fl2va_v1_bf16.safetensors",
+    1.0
    ]
   }
  ],
@@ -1361,7 +1399,7 @@
    10,
    12,
    0,
-   13,
+   31,
    0,
    "MODEL"
   ],
@@ -1596,6 +1634,14 @@
    30,
    0,
    "VIDEO"
+  ],
+  [
+   40,
+   31,
+   0,
+   13,
+   0,
+   "MODEL"
   ]
  ],
  "groups": [

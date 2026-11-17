@@ -11,7 +11,7 @@ Two nodes. Everything else in the workflows is core ComfyUI.
 ## Quick start
 
 1. **Install**: clone this repo into `ComfyUI/custom_nodes/` and restart ComfyUI. No extra Python packages.
-   `timeline_base` also uses [audio-separation-nodes-comfyui](https://github.com/christian-byrne/audio-separation-nodes-comfyui) to split the drums and the voice out of your track (Comfy Cloud has it). The other workflows run without it: load a drums stem file, or let the track guide.
+   `timeline_base` also uses [audio-separation-nodes-comfyui](https://github.com/christian-byrne/audio-separation-nodes-comfyui) to split the drums and the voice out of your track (Comfy Cloud has it). To run without it, delete it and load a drums stem file, or let the track guide.
 2. **Models** (from [Comfy-Org/MiniMax-H3](https://huggingface.co/Comfy-Org/MiniMax-H3)):
 
    | File | Folder |
@@ -19,18 +19,9 @@ Two nodes. Everything else in the workflows is core ComfyUI.
    | `minimax_h3_ref2va_pruned_int8_convrot.safetensors` | `models/diffusion_models` |
    | `qwen3vl_32b_minimax_h3_int8_convrot.safetensors` (or `..._nvfp4_awq` on RTX 50-series) | `models/text_encoders` |
    | `minimax_h3_video_vae_fp16.safetensors`, `minimax_h3_audio_vae_fp32.safetensors` | `models/vae` |
-   | `minimax_h3_ref2v_turbo_4step_v0.1_comfyui_bf16.safetensors` (fast drafts only) | `models/loras` |
+   | `pika_h3_flex_fl2va_v1_bf16.safetensors` | `models/loras` |
 
-3. **Run**: drag a workflow from `example_workflows/` into ComfyUI, load your track and images, and press Run. Each workflow has a note explaining what to change.
-
-| You want | Workflow | mode |
-| --- | --- | --- |
-| Start here: any track, switch between music, dialogue and action | `timeline_base` | any |
-| A music video, hits that land hard | `timeline_music_hits` | music |
-| A quick music draft | `timeline_music_fast` | music |
-| Characters speaking a voice track | `timeline_dialogue` | dialogue |
-| Action timed to sound effects | `timeline_action` | action |
-| Action where you place it, no audio | `timeline_action_drawn_hits` | action |
+3. **Run**: drag `example_workflows/timeline_base.json` into ComfyUI, load your track and images, pick a *mode* and press Run. Its note explains what to change. It runs the pika LoRA at 8 steps and CFG 1.
 
 ## The timeline
 
@@ -58,7 +49,7 @@ The editor on the node shows the shots right away, and the track's waveform (at 
 
 ## Getting good results
 
-- **CFG lands the hits.** The full model at 30 steps and CFG 5, with the negative zeroed *before* the guide (*ConditioningZeroOut* on the Reference to Video output), pushes the picture onto the sound: motion vs drum hits +0.89 on a 5 s test clip. The 4-step turbo LoRA at CFG 1 follows only loosely (+0.27), and raising CFG on the LoRA burns the image.
+- **CFG lands the hits.** The full model at 30 steps and CFG 5, with the negative zeroed *before* the guide (*ConditioningZeroOut* on the Reference to Video output), pushes the picture onto the sound: motion vs drum hits +0.89 on a 5 s test clip. The 4-step turbo LoRA at CFG 1 followed only loosely (+0.27), and raising CFG on a LoRA burns the image. `timeline_base` runs the pika LoRA at 8 steps and CFG 1 for speed; bypass the LoRA and use 30 steps and CFG 5 for the hardest hits.
 - **Find the kicks in the drums stem.** On a busy mix, an 808 or metal, hard bass notes look like kicks; the stem has no bass.
 - **Ask for stillness between hits.** A prompt that implies constant motion ignores the guide.
 - **One reference image per shot** holds the character, setting and palette (`<Picture 1>` in the prompt).
