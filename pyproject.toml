@@ -1,0 +1,12 @@
+[project]
+name = "comfyui-syntax-audio-timeline"
+description = "Cut a track into MiniMax H3 shots synced to the beat, the voice or the hits: music, dialogue and action, with a timeline editor on the node."
+version = "1.0.0"
+license = { file = "LICENSE" }
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/SyntaxDiffusion/ComfyUI-Syntax-Audio-Timeline"
+
+[tool.comfy]
+DisplayName = "Syntax Audio Timeline"

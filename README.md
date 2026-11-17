@@ -10,7 +10,8 @@ Two nodes. Everything else in the workflows is core ComfyUI.
 
 ## Quick start
 
-1. **Install**: clone this repo into `ComfyUI/custom_nodes/` and restart ComfyUI. No extra Python packages. For music, also install [audio-separation-nodes-comfyui](https://github.com/christian-byrne/audio-separation-nodes-comfyui) to get the drums stem (or load a stem file).
+1. **Install**: clone this repo into `ComfyUI/custom_nodes/` and restart ComfyUI. No extra Python packages.
+   `timeline_base` also uses [audio-separation-nodes-comfyui](https://github.com/christian-byrne/audio-separation-nodes-comfyui) to split the drums and the voice out of your track (Comfy Cloud has it). The other workflows run without it: load a drums stem file, or let the track guide.
 2. **Models** (from [Comfy-Org/MiniMax-H3](https://huggingface.co/Comfy-Org/MiniMax-H3)):
 
    | File | Folder |
@@ -76,6 +77,10 @@ Join the shots with core nodes: *Get Image from Batch* (length from *frames*) an
 ## Credits
 
 The idea of steering H3's action with a guide sound comes from [Nekodificador](https://x.com/Nekodificador)'s event curves in [ComfyUI-NKD-Basic-Tools](https://github.com/Nekodificador/ComfyUI-NKD-Basic-Tools). The earlier curve-based nodes of this pack are on the `v1` branch.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
 
 ## Tests
 
