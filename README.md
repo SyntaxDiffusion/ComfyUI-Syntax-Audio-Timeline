@@ -79,7 +79,7 @@ Join the shots with core nodes: *Get Image from Batch* (length from *frames*) an
 
 ## Credits
 
-The idea of steering H3's action with a guide sound comes from [Nekodificador](https://x.com/Nekodificador)'s event curves in [ComfyUI-NKD-Basic-Tools](https://github.com/Nekodificador/ComfyUI-NKD-Basic-Tools).
+The idea of steering H3's action with a guide sound comes from [Nekodificador] & Adobe Max :D
 
 ## License
 
