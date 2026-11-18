@@ -31,7 +31,7 @@ The strip along the bottom is *Syntax Preview Strip*: the guide's loudness in bl
 
 - **music**: shots of whole bars from the downbeat after *start_at*, each guided by its part of the **drums**. *music_guide* picks what H3 hears: *drums*, the drums stem with every hit of the kit (the default, for busy and fast songs), or *kicks*, a clean thump on each kick drum hit and nothing else (for four-on-the-floor). A shot with no kick, like a breakdown or 808s, gets the track's low hits instead of silence. Connect the drums stem to **drums** (Audio Separation -> Drums); without it the guide is the kicks found in the full mix, where hard bass notes can count as kicks too. The beat grid is set on the kicks, so cuts land on the beat. *bpm* 0 finds the tempo.
 - **dialogue**: cuts moved into the pauses, so no line is cut in half, each shot guided by its part of the **voice** (Audio Separation -> Vocals, or the track if it is only voice).
-- **action**: cuts moved between hits, each shot guided by its part of the track plus the hits and sounds you draw on the timeline. With no track, the timeline is blank and what you draw is the sound.
+- **action**: cuts moved between hits, each shot guided by its part of the **drums** (as set by *music_guide*), or of the track without the drums stem, plus the hits and sounds you draw on the timeline. With no track, the timeline is blank and what you draw is the sound.
 
 *duration* is how long the video runs from *start_at*, split across the images; 0 gives about 5.5 s per image for music and runs to the end of the sound otherwise. Each shot hears its part of the guide from its first frame, so H3 times the action to it. The finished video carries your original track.
 

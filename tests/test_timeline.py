@@ -360,6 +360,23 @@ def test_drawn_hits_are_mixed_into_a_track_guide():
     assert mixed["waveform"][..., i:i + 2000].abs().max() > 0
 
 
+def test_action_on_a_song_is_guided_by_the_drums_stem():
+    drums = drum_loop(120, bars=4, offset=0.5, sixteenths=True)
+    t = torch.arange(drums.numel()) / SR
+    track = {"waveform": (drums + 0.5 * torch.sin(2 * math.pi * 220 * t)).view(1, 1, -1), "sample_rate": SR}   # the mix: drums and a held note
+    stem = {"waveform": drums.view(1, 1, -1), "sample_rate": SR}
+    images = {"image0": torch.zeros(1, 8, 8, 3)}
+    edits = '{"cuts": [0.0, 6.0], "hits": [4.0]}'
+    out = nodes.SyntaxTimeline.execute(track=track, drums=stem, images=images, start_at=0.0, duration=0.0, bpm=0.0, mode="action", edits=edits)
+    guide = out.result[1][0]["waveform"][0, 0]
+    assert "guided by the drums" in out.result[5]
+    assert torch.allclose(guide[: int(3.9 * SR)], drums[: int(3.9 * SR)])     # the stem, not the mix
+    assert guide[int(4.0 * SR):int(4.0 * SR) + 2000].abs().max() > drums[int(4.0 * SR):int(4.0 * SR) + 2000].abs().max()   # plus the drawn hit
+    kicks = nodes.SyntaxTimeline.execute(track=track, drums=stem, images=images, start_at=0.0, duration=0.0, bpm=0.0, mode="action", edits=edits,
+                                         music_guide="kicks")
+    assert "guided by the kicks" in kicks.result[5] and not torch.allclose(kicks.result[1][0]["waveform"][0, 0], guide)
+
+
 def test_timeline_gives_each_shot_its_slice_of_the_strip():
     images = {f"image{i}": torch.zeros(1, 8, 8, 3) for i in range(2)}
     out = nodes.SyntaxTimeline.execute(track=None, images=images, start_at=0.0, duration=8.0, bpm=0.0, mode="action",

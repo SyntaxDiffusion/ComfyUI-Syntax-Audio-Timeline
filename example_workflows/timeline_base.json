@@ -2,7 +2,7 @@
   "id": "7e1a0c00-0000-4000-8000-260954875564",
   "revision": 0,
   "last_node_id": 34,
-  "last_link_id": 60,
+  "last_link_id": 61,
   "nodes": [
     {
       "id": 1,
@@ -24,10 +24,10 @@
         "Node name for S&R": "MarkdownNote"
       },
       "widgets_values": [
-        "## Base: music, dialogue or action\n\nOne shot per image over your track, in order. Load a track and your images, pick **mode** and press Run.\n\n- **mode**: *music* cuts whole bars from the downbeat after *start_at*, guided by the drums (*music_guide*: *drums*, the whole drums stem, or *kicks*, a thump on each kick); *dialogue* cuts in the pauses, guided by **voice**; *action* cuts between hits, guided by the track.\n- **Audio Separation** feeds **drums** and **voice** from your track, so switching mode is one click.\n- **duration**: how long the video runs from *start_at*. One image and 30 s gives one 30 s shot.\n- **Context windows**: each shot is sampled in overlapping ~5 s windows, so shots can run 30 s and more and keep their look. Bypass the node for the tightest sync on short shots.\n- **Anchor** (optional): to hold a hard style or a character across the cuts, connect a character or style sheet to *Reference to Video*'s second image slot and add *drawn in the art style of <Picture 2>* to the prompt. Not a full scene: H3 may animate the anchor instead of the shot's image.\n- **Timeline**: drag the yellow handles to set the range, double-click a shot to split it, right-click a cut to merge, *One shot* for a single long shot. Hover it for hints, **?** lists every control, **Analyse** shows the exact cuts without rendering.\n\n- **Trim Audio Duration**: the part of the track to use (start and length in seconds); *start_at* and *duration* count from the start of the trim. The Timeline's track and Audio Separation both take the trimmed audio, so the kicks line up.\n\n**This version: fast.** The pika LoRA, 8 steps, CFG 1. For hits that land harder, bypass the LoRA and use 30 steps and CFG 5: the negative is already zeroed before the guide.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
+        "## Base: music, dialogue or action\n\nOne shot per image over your track, in order. Load a track and your images, pick **mode** and press Run.\n\n- **mode**: *music* cuts whole bars from the downbeat after *start_at*, guided by the drums (*music_guide*: *drums*, the whole drums stem, or *kicks*, a thump on each kick); *dialogue* cuts in the pauses, guided by **voice**; *action* cuts between hits, guided by the drums (*music_guide* again) and the hits you draw.\n- **Audio Separation** feeds **drums** and **voice** from your track, so switching mode is one click.\n- **duration**: how long the video runs from *start_at*. One image and 30 s gives one 30 s shot.\n- **Context windows**: each shot is sampled in overlapping ~5 s windows, so shots can run 30 s and more and keep their look. Bypass the node for the tightest sync on short shots.\n- **Anchor** (optional): to hold a hard style or a character across the cuts, connect a character or style sheet to *Reference to Video*'s second image slot and add *drawn in the art style of <Picture 2>* to the prompt. Not a full scene: H3 may animate the anchor instead of the shot's image.\n- **Timeline**: drag the yellow handles to set the range, double-click a shot to split it, right-click a cut to merge, *One shot* for a single long shot. Hover it for hints, **?** lists every control, **Analyse** shows the exact cuts without rendering.\n\n- **Trim Audio Duration**: the part of the track to use (start and length in seconds); *start_at* and *duration* count from the start of the trim. The Timeline's track and Audio Separation both take the trimmed audio, so the kicks line up.\n\n**This version: fast.** The pika LoRA, 8 steps, CFG 1. For hits that land harder, bypass the LoRA and use 30 steps and CFG 5: the negative is already zeroed before the guide.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
       ],
       "widgets_values_named": {
-        "text": "## Base: music, dialogue or action\n\nOne shot per image over your track, in order. Load a track and your images, pick **mode** and press Run.\n\n- **mode**: *music* cuts whole bars from the downbeat after *start_at*, guided by the kick of **drums**; *dialogue* cuts in the pauses, guided by **voice**; *action* cuts between hits, guided by the track.\n- **Audio Separation** feeds **drums** and **voice** from your track, so switching mode is one click.\n- **duration**: how long the video runs from *start_at*. One image and 30 s gives one 30 s shot.\n- **Context windows**: each shot is sampled in overlapping ~5 s windows, so shots can run 30 s and more and keep their look. Bypass the node for the tightest sync on short shots.\n- **Anchor** (optional): to hold a hard style or a character across the cuts, connect a character or style sheet to *Reference to Video*'s second image slot and add *drawn in the art style of <Picture 2>* to the prompt. Not a full scene: H3 may animate the anchor instead of the shot's image.\n- **Timeline**: drag the yellow handles to set the range, double-click a shot to split it, right-click a cut to merge, *One shot* for a single long shot. Hover it for hints, **?** lists every control, **Analyse** shows the exact cuts without rendering.\n\n**This version: hits that land.** Full model, 30 steps, CFG 5 with the negative zeroed before the guide, so the picture is pushed onto the audio.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
+        "text": "## Base: music, dialogue or action\n\nOne shot per image over your track, in order. Load a track and your images, pick **mode** and press Run.\n\n- **mode**: *music* cuts whole bars from the downbeat after *start_at*, guided by the drums (*music_guide*: *drums*, the whole drums stem, or *kicks*, a thump on each kick); *dialogue* cuts in the pauses, guided by **voice**; *action* cuts between hits, guided by the drums (*music_guide* again) and the hits you draw.\n- **Audio Separation** feeds **drums** and **voice** from your track, so switching mode is one click.\n- **duration**: how long the video runs from *start_at*. One image and 30 s gives one 30 s shot.\n- **Context windows**: each shot is sampled in overlapping ~5 s windows, so shots can run 30 s and more and keep their look. Bypass the node for the tightest sync on short shots.\n- **Anchor** (optional): to hold a hard style or a character across the cuts, connect a character or style sheet to *Reference to Video*'s second image slot and add *drawn in the art style of <Picture 2>* to the prompt. Not a full scene: H3 may animate the anchor instead of the shot's image.\n- **Timeline**: drag the yellow handles to set the range, double-click a shot to split it, right-click a cut to merge, *One shot* for a single long shot. Hover it for hints, **?** lists every control, **Analyse** shows the exact cuts without rendering.\n\n- **Trim Audio Duration**: the part of the track to use (start and length in seconds); *start_at* and *duration* count from the start of the trim. The Timeline's track and Audio Separation both take the trimmed audio, so the kicks line up.\n\n**This version: fast.** The pika LoRA, 8 steps, CFG 1. For hits that land harder, bypass the LoRA and use 30 steps and CFG 5: the negative is already zeroed before the guide.\n\nNodes: Syntax Timeline and the optional Syntax Preview Strip (the sync bar along the bottom; delete it to hide); everything else is core."
       },
       "color": "#432",
       "bgcolor": "#653"
@@ -314,7 +314,9 @@
         {
           "name": "Vocals",
           "type": "AUDIO",
-          "links": []
+          "links": [
+            61
+          ]
         }
       ],
       "title": "Drums and voice from the track",
@@ -1471,7 +1473,7 @@
           "name": "voice",
           "shape": 7,
           "type": "AUDIO",
-          "link": null
+          "link": 61
         }
       ],
       "outputs": [
@@ -1883,6 +1885,14 @@
       27,
       1,
       "SYNTAX_STRIP"
+    ],
+    [
+      61,
+      10,
+      3,
+      34,
+      7,
+      "AUDIO"
     ]
   ],
   "groups": [

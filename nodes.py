@@ -24,7 +24,7 @@ class SyntaxTimeline(io.ComfyNode):
             node_id="SyntaxTimeline",
             display_name="Syntax Timeline",
             category=CATEGORY,
-            description="Cut your track into shots, each guided by its part of the sound: the drums (or just the kicks) for music, the voice for dialogue, the track and what you draw for action. Most outputs are lists, so the nodes after it run once per shot; join the shot videos with Concatenate Video.",
+            description="Cut your track into shots, each guided by its part of the sound: the drums (or just the kicks) for music, the voice for dialogue, the drums (or the track) and what you draw for action. Most outputs are lists, so the nodes after it run once per shot; join the shot videos with Concatenate Video.",
             inputs=[
                 io.Audio.Input("track", optional=True,
                                tooltip="Your song, dialogue or sound effects. It sets the timeline and is the soundtrack of the finished video. Leave it empty to draw the action on a blank timeline."),
@@ -32,11 +32,11 @@ class SyntaxTimeline(io.ComfyNode):
                     io.Image.Input("image", tooltip="Reference images, used by the shots in order and repeated when there are more shots than images."),
                     prefix="image", min=1, max=50)),
                 io.Audio.Input("drums", optional=True,
-                               tooltip="music: the drums stem (Audio Separation -> Drums). It guides the shots, and the beat and the kicks are found in it. Without it the kicks are found in the track, where hard bass notes count as kicks too."),
+                               tooltip="music and action: the drums stem (Audio Separation -> Drums). It guides the shots, and the beat and the kicks are found in it. Without it, music finds the kicks in the track, where hard bass notes count as kicks too, and action is guided by the whole track."),
                 io.Audio.Input("voice", optional=True,
                                tooltip="dialogue: the voice (Audio Separation -> Vocals). It guides the lips and places the cuts. Default: the track."),
                 io.Combo.Input("mode", options=MODES, default="music",
-                               tooltip="music: shots of whole bars, guided by the drums (music_guide). dialogue: cuts in the pauses, guided by the voice. action: cuts between hits, guided by the track and the hits and curves you draw on the timeline."),
+                               tooltip="music: shots of whole bars, guided by the drums (music_guide). dialogue: cuts in the pauses, guided by the voice. action: cuts between hits, guided by the drums (music_guide, or the track without the drums stem) and the hits and curves you draw on the timeline."),
                 io.Float.Input("start_at", default=0.0, min=0.0, max=36000.0, step=0.01,
                                tooltip="Where the first shot starts, in seconds. music snaps it to the next downbeat."),
                 io.Float.Input("duration", default=0.0, min=0.0, max=36000.0, step=0.1,
@@ -46,7 +46,7 @@ class SyntaxTimeline(io.ComfyNode):
                                tooltip="action: the sound of a hit you add on the timeline: thump (punches, blows), crash (cymbals, smashes), boom (explosions, thunder). Double-click a hit to change its sound."),
                 io.String.Input("edits", default="", tooltip="Shots, hits and curves from the timeline editor, in seconds. Written by the editor."),
                 io.Combo.Input("music_guide", options=MUSIC_GUIDES, default="drums",
-                               tooltip="music: what H3 hears. drums: the drums stem, every hit of the kit, for busy and fast songs. kicks: a clean thump on each kick drum hit and nothing else, for four-on-the-floor. Shots with no kick get the track's low hits (808s, bass drops). Without the drums stem: kicks."),
+                               tooltip="music and action: what H3 hears. drums: the drums stem, every hit of the kit, for busy and fast songs. kicks: a clean thump on each kick drum hit and nothing else, for four-on-the-floor. In music, shots with no kick get the track's low hits (808s, bass drops). Without the drums stem: kicks."),
             ],
             is_output_node=True,
             has_intermediate_output=True,
@@ -79,6 +79,10 @@ class SyntaxTimeline(io.ComfyNode):
             if duration:
                 end = start_at + duration
             guide = (voice if mode == "dialogue" else None) or track
+            if mode == "action" and drums is not None:
+                # on a song, the drums guide the action instead of the whole mix
+                sr = drums["sample_rate"]
+                guide = drums if music_guide == "drums" else {"waveform": drawn_audio([(k, "thump") for k in find_kicks(_mono(drums), sr)], [], drums["waveform"].shape[-1] / sr, sr).view(1, 1, -1), "sample_rate": sr}
             if mode == "action" and (hits or curves):
                 sr = guide["sample_rate"]
                 extra = drawn_audio(hits, curves, guide["waveform"].shape[-1] / sr, sr)
@@ -105,6 +109,8 @@ class SyntaxTimeline(io.ComfyNode):
         if edited and len(edited) > 1:
             cuts = sorted(float(c) for c in edited)
             how = "cuts from the editor"
+        if mode == "action" and drums is not None and not blank:
+            how += ", guided by the " + music_guide
         if mode == "music":
             # a shot with no kick in the stem (a breakdown, or 808s the separation put in the bass) is guided by the track's low hits
             bare = [i for i, (a, b) in enumerate(zip(cuts, cuts[1:])) if not any(a <= k < b for k in kicks)]
